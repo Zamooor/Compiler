@@ -15,7 +15,7 @@ id/*this is a comment/****
 "string \n omg \t \^V \^d should be 
 a plus next \007 \555\" \\ \    
 \ this is on another line \
-    \and finally a no good escape character   \^[ \^d  \^g  \^\  \^c        \^[ \^] \^^ \^_ \^@
+    \and finally a no good escape character   \^[ \^d  \^g  \^\  \^c        \^[ \^] \^^ \^_ \^@ "
 wat
 -19
 while if then <> &

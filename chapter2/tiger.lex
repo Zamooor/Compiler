@@ -1,8 +1,5 @@
 type pos = int
-type svalue = Tokens.svalue
-type pos = int
-type ('a,'b) token = ('a,'b) Tokens.token
-type lexresult = (svalue,pos) token
+type lexresult = Tokens.token
 
 val lineNum = ErrorMsg.lineNum
 val linePos = ErrorMsg.linePos
@@ -31,15 +28,15 @@ fun eof() =
 );
 
         
+    
+
+
 
 %% 
-
 digits=[0-9]+ ;
 letters=[a-z|A-Z]+ ;
-%header (functor TigerLexFun(structure Tokens: Tiger_TOKENS));
-%s STRING COMMENT;
-
-
+%s COMMENT;
+%s STRING;
 %%
 <INITIAL,COMMENT>\n     => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
 

@@ -1,9 +1,10 @@
 Group is
 
-driver.sml
+tiger.lex
 errormsg.sml
-tokens.sig
-tokens.sml
-tiger.lex : shell (target: tiger.lex.sml ml-lex %s)
+parsetest.sml
+tiger.grm
 $/smlnj-lib.cm
+$/ml-yacc-lib.cm
 $/basis.cm
+
