@@ -52,11 +52,16 @@ exp:  lvalue			                ()
     | INT                               ()
     | STRING                            ()
     | LPAREN exp RPAREN                 ()
+    | ifblock                           ()
+    
 
     
 lvalue: ID                              ()
     | lvalue DOT ID                     ()
     | lvalue LBRACK exp RBRACK          ()
+    
+ifblock: IF exp THEN exp ELSE exp       ()
+    | IF exp THEN exp                   ()
     
 
 
