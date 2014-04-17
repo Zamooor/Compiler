@@ -12,12 +12,12 @@
   | FUNCTION | VAR | TYPE 
 
 %nonterm
-    exp | program
+    exp | program 
     | decs | dec
     | tydec | ty | tyfields
     | vardec | fundec | recdec | arraydec
     | lvalue
-    | sequence
+    | expseq | exps
     | neg
     | funcall
     | arith | comp | strcomp | boolop | compop
@@ -53,6 +53,7 @@ exp:  lvalue			                ()
     | STRING                            ()
     | LPAREN exp RPAREN                 ()
     | ifblock                           ()
+    | expseq                            ()
     
 
     
@@ -62,6 +63,11 @@ lvalue: ID                              ()
     
 ifblock: IF exp THEN exp ELSE exp       ()
     | IF exp THEN exp                   ()
+    
+expseq: LPAREN exp SEMICOLON exps RPAREN()
+
+exps : exp SEMICOLON                    ()
+    | exp SEMICOLON exps                ()
     
 
 

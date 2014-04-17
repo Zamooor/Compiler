@@ -1,1 +1,27 @@
-if asd then x = b
+(
+    if
+    (
+        aasdf;
+        asdf;
+        123;
+    )
+    then
+    (
+        if
+            yes
+        then
+            no
+        ;
+        
+        123;
+    )
+    else
+        asdf
+    ;
+    
+    if 
+        yes
+    then
+        no
+    ;
+)
