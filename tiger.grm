@@ -52,7 +52,7 @@ exp:  lvalue			                ()
     | INT                               ()
     | STRING                            ()
     | LPAREN exp RPAREN                 ()
-    | comp
+
     
 lvalue: ID                              ()
     | lvalue DOT ID                     ()
