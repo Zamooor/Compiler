@@ -11,7 +11,18 @@
   | BREAK | NIL
   | FUNCTION | VAR | TYPE 
 
-%nonterm  exp | program
+%nonterm
+    exp | program
+    | decs | dec
+    | tydec | ty | tyfields
+    | vardec | fundec | recdec | arraydec
+    | lvalue
+    | sequence
+    | neg
+    | funcall
+    | arith | comp | strcomp | boolop
+    | assign
+    | ifblock | whileblock | forblock | letblock
 
 %pos int
 %verbose
@@ -35,4 +46,13 @@
 program	: exp				()
 
 	
-exp: 			()
+exp:  lvalue			()
+    | NIL               ()
+    | LPAREN RPAREN     ()
+    | INT               ()
+    | STRING            ()
+    | LPAREN exp RPAREN ()
+
+    
+    
+    
