@@ -1,9 +1,10 @@
 (
+/**** testing nested IFs ******/
     if
     (
         aasdf;
         asdf;
-        123;
+        123
     )
     then
     (
@@ -13,7 +14,7 @@
             no
         ;
         
-        123;
+        123
     )
     else
         asdf
@@ -24,4 +25,32 @@
     then
         no
     ;
+    
+/***** testing LET ******/
+    let
+        type a = b
+        type b = {}
+        type d = {e : f}
+        type e = {f : g, g : h, h : i}
+        type c = array of d
+    in
+    (
+        if
+            asd
+        then
+            asd
+        ;
+        
+        id
+        
+    )
+    end;
+    
+    let
+        type a = b
+    in
+        exp
+    end   
+        
+    
 )

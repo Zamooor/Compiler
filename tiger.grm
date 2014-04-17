@@ -32,9 +32,8 @@
 
 %name Tiger
 
-%keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE 
-	DO OF NIL
-
+%keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE	DO OF NIL
+%right ELSE
 %prefer THEN ELSE LPAREN
 
 %value ID ("bogus")
@@ -43,31 +42,54 @@
 
 %%
 
-program	: exp				()
+program	: exp				                ()
 
 	
-exp:  lvalue			                ()
-    | NIL                               ()
-    | LPAREN RPAREN                     ()
-    | INT                               ()
-    | STRING                            ()
-    | LPAREN exp RPAREN                 ()
-    | ifblock                           ()
-    | expseq                            ()
+exp:  lvalue			                    ()
+    | NIL                                   ()
+    | LPAREN RPAREN                         ()
+    | INT                                   ()
+    | STRING                                ()
+    | LPAREN exp RPAREN                     ()
+    | ifblock                               ()
+    | expseq                                ()
+    | letblock                              ()
     
 
     
-lvalue: ID                              ()
-    | lvalue DOT ID                     ()
-    | lvalue LBRACK exp RBRACK          ()
+lvalue: ID                                  ()
+    | lvalue DOT ID                         ()
+    | lvalue LBRACK exp RBRACK              ()
     
-ifblock: IF exp THEN exp ELSE exp       ()
-    | IF exp THEN exp                   ()
+ifblock: IF exp THEN exp ELSE exp %prec ELSE()
+    | IF exp THEN exp                       ()
     
-expseq: LPAREN exp SEMICOLON exps RPAREN()
+    
+    
+letblock: LET decs IN exp END               () 
+    
+expseq: LPAREN exp SEMICOLON exps RPAREN    ()
 
-exps : exp SEMICOLON                    ()
-    | exp SEMICOLON exps                ()
+exps : exp                                  ()
+    | exp SEMICOLON exps                    ()
+    
+    
+decs: dec          			                ()
+    | dec decs                              ()
+
+dec: tydec				                    ()
+    | vardec				                ()
+    | fundec				                ()
+
+tydec: TYPE ID EQ ty			            ()
+
+ty: ID 	       	  			                ()
+    | LBRACE RBRACE                         ()
+    | LBRACE tyfields RBRACE		        ()
+    | ARRAY OF ID     			            ()
+
+tyfields: ID COLON ID			            ()
+	| ID COLON ID COMMA tyfields	        ()
     
 
 
