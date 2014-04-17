@@ -20,7 +20,7 @@
     | sequence
     | neg
     | funcall
-    | arith | comp | strcomp | boolop
+    | arith | comp | strcomp | boolop | compop
     | assign
     | ifblock | whileblock | forblock | letblock
 
@@ -46,12 +46,19 @@
 program	: exp				()
 
 	
-exp:  lvalue			()
-    | NIL               ()
-    | LPAREN RPAREN     ()
-    | INT               ()
-    | STRING            ()
-    | LPAREN exp RPAREN ()
+exp:  lvalue			                ()
+    | NIL                               ()
+    | LPAREN RPAREN                     ()
+    | INT                               ()
+    | STRING                            ()
+    | LPAREN exp RPAREN                 ()
+    | comp
+    
+lvalue: ID                              ()
+    | lvalue DOT ID                     ()
+    | lvalue LBRACK exp RBRACK          ()
+    
+
 
     
     
