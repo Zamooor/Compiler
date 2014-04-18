@@ -146,6 +146,8 @@ letters=[a-z|A-Z]+ ;
 
 <INITIAL>" "            => (continue());
 
+<INITIAL>\t             => (continue());
+
 
 <INITIAL>.              => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
 
