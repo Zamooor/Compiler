@@ -26,6 +26,9 @@
         no
     ;
     
+    
+    asdf;
+    
 /***** testing LET ******/
     let
         type a = b

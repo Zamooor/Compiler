@@ -145,6 +145,7 @@ letters=[a-z|A-Z]+ ;
                         => (Tokens.ID(yytext,yypos,yypos+size yytext));
 
 <INITIAL>" "            => (continue());
+<INITIAL>\t             => (continue());
 
 
 <INITIAL>.              => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());

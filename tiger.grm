@@ -1,6 +1,4 @@
 %%
-
- 
 %term
     EOF 
   | ID of string
@@ -24,8 +22,7 @@
     | funcall
     | arith | comp | strcomp | boolop | compop
     | assign
-    | ifblock | ifend
-    | whileblock | forblock | letblock
+    | ifblock | whileblock | forblock | letblock
 
 %pos int
 %verbose
@@ -42,8 +39,7 @@
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
-
-%right ELSE
+%left ELSE
 
 %%
 
@@ -59,6 +55,7 @@ exp:  lvalue			                    ()
     | ifblock                               ()
     | expseq                                ()
     | letblock                              ()
+    | BREAK                                 ()
     
 
     
@@ -66,10 +63,8 @@ lvalue: ID                                  ()
     | lvalue DOT ID                         ()
     | lvalue LBRACK exp RBRACK              ()
     
-ifblock: IF exp THEN ifend                  ()
-    
-ifend: exp                                  ()
-    | exp ELSE exp                          ()
+ifblock: IF exp THEN exp ELSE exp           ()
+    | IF exp THEN exp                       ()
 
     
     
