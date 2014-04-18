@@ -1,3 +1,3 @@
 CM.make "sources.cm";
-Parse.parse ("merge.tig");
+Parse.parse ("queens.tig");
 OS.Process.exit(OS.Process.success);

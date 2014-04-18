@@ -5,7 +5,7 @@
   | INT of int | STRING of string 
   | COMMA | COLON | SEMICOLON | LPAREN | RPAREN | LBRACK | RBRACK 
   | LBRACE | RBRACE | DOT 
-  | PLUS | MINUS | TIMES | DIVIDE | EQ | NEQ | LT | LE | GT | GE
+  | PLUS | MINUS | TIMES | DIVIDE | EQ | NEQ | LT | LE | GT | GE | UMINUS
   | AND | OR | ASSIGN
   | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF 
   | BREAK | NIL
@@ -15,13 +15,13 @@
     exp | program 
     | decs | dec
     | tydec | ty | tyfields
-    | vardec | fundec | recdec | arraydec
+    | vardec | fundec 
     | lvalue
-    | expseq | exps
-    | neg
+    | expseq | exps | expList | expL
     | funcall
-    | arith | comp | strcomp | boolop | compop
+    | arith | comp | boolop 
     | assign
+    | recinst | aggregateSeq
     | ifblock | whileblock | forblock | letblock
 
 %pos int
@@ -39,62 +39,109 @@
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
-%left ELSE
+%right ELSE DO
+%left OR
+%left AND
+%nonassoc EQ NEQ GT LT GE LE
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left UMINUS
+
 
 %%
 
-program	: exp				                ()
-
+program	: exp				                                ()
 	
-exp:  lvalue			                    ()
-    | NIL                                   ()
-    | LPAREN RPAREN                         ()
-    | INT                                   ()
-    | STRING                                ()
-    | LPAREN exp RPAREN                     ()
-    | ifblock                               ()
-    | expseq                                ()
-    | letblock                              ()
-    | BREAK                                 ()
+exp:  lvalue			                                    ()
+    | assign                                                ()
+    | recinst                                               ()
+    | NIL                                                   ()
+    | LPAREN RPAREN                                         ()
+    | INT                                                   ()
+    | STRING                                                ()
+    | LPAREN exp RPAREN                                     ()
+    | ifblock                                               ()    
+    | whileblock                                            ()    
+    | forblock                                              ()
+    | expseq                                                ()
+    | letblock                                              ()
+    | BREAK                                                 ()
+    | arith				                                    ()
+    | comp    				                                ()
+    | boolop 				                                ()
+    | funcall                                               ()
     
+lvalue: ID                                                  ()
+    | lvalue DOT ID                                         ()
+    | lvalue LBRACK exp RBRACK                              ()    
+    
+assign: lvalue ASSIGN exp                                   ()
 
-    
-lvalue: ID                                  ()
-    | lvalue DOT ID                         ()
-    | lvalue LBRACK exp RBRACK              ()
-    
-ifblock: IF exp THEN exp ELSE exp           ()
-    | IF exp THEN exp                       ()
+recinst: ID LBRACE RBRACE                                   ((*I think this is taken care of in ty and tyfields*))
+| ID LBRACE aggregateSeq RBRACE                             ()
 
+aggregateSeq: ID EQ exp                                     ()
+| aggregateSeq COMMA ID EQ exp                              ()
     
-    
-letblock: LET decs IN exp END               () 
-    
-expseq: LPAREN exp SEMICOLON exps RPAREN    ()
+ifblock: IF exp THEN exp ELSE exp                           ()
+    | IF exp THEN exp                                       ()
 
-exps : exp                                  ()
-    | exp SEMICOLON exps                    ()
-    
-    
-decs: dec          			                ()
-    | dec decs                              ()
+whileblock: WHILE exp DO exp                                ()
 
-dec: tydec				                    ()
-    | vardec				                ()
-    | fundec				                ()
-
-tydec: TYPE ID EQ ty			            ()
-
-ty: ID 	       	  			                ()
-    | LBRACE RBRACE                         ()
-    | LBRACE tyfields RBRACE		        ()
-    | ARRAY OF ID     			            ()
-
-tyfields: ID COLON ID			            ()
-	| ID COLON ID COMMA tyfields	        ()
+forblock: FOR ID ASSIGN exp TO exp DO exp                   ()
     
+letblock: LET decs IN exp END                               () 
+    
+expseq: LPAREN exp SEMICOLON exps RPAREN                    ()
 
+exps : exp                                                  ()
+    | exp SEMICOLON exps                                    ()
+    
+expList : LPAREN RPAREN                                     ()
+    | LPAREN expL RPAREN                                    ()
 
+expL : exp                                                  ()
+    | exp COMMA expL                                        ()    
     
-    
-    
+decs: dec          			                                ()
+    | dec decs                                              ()
+
+dec: tydec				                                    ()
+    | vardec				                                ()
+    | fundec				                                ()
+
+tydec: TYPE ID EQ ty			                            ()
+
+ty: ID 	       	  			                                ()
+    | LBRACE RBRACE                                         ()
+    | LBRACE tyfields RBRACE		                        ()
+    | ARRAY OF ID     			                            ()
+
+tyfields: ID COLON ID			                            ()
+	| ID COLON ID COMMA tyfields	                        ()
+	
+vardec: VAR ID ASSIGN exp                                   ()
+    | VAR ID COLON ID ASSIGN exp                            ()
+
+fundec: FUNCTION ID LPAREN RPAREN EQ exp                    ()
+    | FUNCTION ID LPAREN tyfields RPAREN EQ exp             ()
+    | FUNCTION ID LPAREN RPAREN COLON ID EQ exp             ()
+    | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp    ()
+
+funcall: ID expList                                         ()	
+	
+arith: exp PLUS exp			                                ()
+	| exp MINUS exp			                                ()
+	| exp TIMES exp			                                ()
+	| exp DIVIDE exp		                                ()
+	| MINUS exp 	%prec UMINUS	                        ()
+	
+comp: exp EQ exp			                                ()
+	| exp NEQ exp			                                ()
+	| exp GT exp			                                ()
+	| exp LT exp			                                ()
+	| exp GE exp			                                ()
+	| exp LE exp			                                ()
+
+boolop: exp AND exp			                                ()
+	|exp OR exp			                                    ()
