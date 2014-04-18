@@ -1,4 +1,6 @@
 %%
+
+ 
 %term
     EOF 
   | ID of string
@@ -22,7 +24,8 @@
     | funcall
     | arith | comp | strcomp | boolop | compop
     | assign
-    | ifblock | whileblock | forblock | letblock
+    | ifblock | ifend
+    | whileblock | forblock | letblock
 
 %pos int
 %verbose
@@ -33,12 +36,14 @@
 %name Tiger
 
 %keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE	DO OF NIL
-%right ELSE
+
 %prefer THEN ELSE LPAREN
 
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
+
+%right ELSE
 
 %%
 
@@ -61,9 +66,11 @@ lvalue: ID                                  ()
     | lvalue DOT ID                         ()
     | lvalue LBRACK exp RBRACK              ()
     
-ifblock: IF exp THEN exp ELSE exp %prec ELSE()
-    | IF exp THEN exp                       ()
+ifblock: IF exp THEN ifend                  ()
     
+ifend: exp                                  ()
+    | exp ELSE exp                          ()
+
     
     
 letblock: LET decs IN exp END               () 

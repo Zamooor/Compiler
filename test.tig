@@ -50,7 +50,18 @@
         type a = b
     in
         exp
-    end   
+    end;
+    
+/******test*****/    
+    
+    let
+        type a = b
+    in
+        id
+    end;
+    
+    A
+      
         
     
 )
