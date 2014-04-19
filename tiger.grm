@@ -21,7 +21,7 @@
     | funcall
     | arith | comp | boolop 
     | assign
-    | recinst | aggregateSeq
+    | recinst | aggregateSeq | arrayinst
     | ifblock | whileblock | forblock | letblock
 
 %pos int
@@ -39,10 +39,11 @@
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
-%right ELSE DO
+%right ELSE DO ASSIGN THEN
 %left OR
 %left AND
 %nonassoc EQ NEQ GT LT GE LE
+%left OF
 %left PLUS MINUS
 %left TIMES DIVIDE
 %left UMINUS
@@ -53,8 +54,10 @@
 program	: exp				                                ()
 	
 exp:  lvalue			                                    ()
+    | ID                                                    ()
     | assign                                                ()
     | recinst                                               ()
+    | arrayinst                                             ()
     | NIL                                                   ()
     | LPAREN RPAREN                                         ()
     | INT                                                   ()
@@ -71,17 +74,20 @@ exp:  lvalue			                                    ()
     | boolop 				                                ()
     | funcall                                               ()
     
-lvalue: ID                                                  ()
+lvalue: ID DOT ID                                           ()    
     | lvalue DOT ID                                         ()
+    | ID LBRACK exp RBRACK                                  ()
     | lvalue LBRACK exp RBRACK                              ()    
     
 assign: lvalue ASSIGN exp                                   ()
 
-recinst: ID LBRACE RBRACE                                   ((*I think this is taken care of in ty and tyfields*))
+recinst: ID LBRACE RBRACE                                   ()
 | ID LBRACE aggregateSeq RBRACE                             ()
 
 aggregateSeq: ID EQ exp                                     ()
 | aggregateSeq COMMA ID EQ exp                              ()
+
+arrayinst: ID LBRACK exp RBRACK OF exp                      ()
     
 ifblock: IF exp THEN exp ELSE exp                           ()
     | IF exp THEN exp                                       ()

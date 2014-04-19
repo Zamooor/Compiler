@@ -93,6 +93,7 @@ let
     var num1 := 13
     var num2 : int := 23
     var num3 : int := 434
+    var num4 := intArray [N+N-1] of 15
     function addPair(n1 : int, n2 : int) : int =
         (n1 + n2)
 
@@ -135,6 +136,9 @@ for a := 123 + 345 to while a do b
                 b 
         end
 ;
+
+intArray [N+N-1] of 15 = b;
+intArray [N+N-1] of 15 + b;
 
 for a :=1 to a do b
 
