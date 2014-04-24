@@ -7,13 +7,24 @@ structure A = Absyn
   | INT of int | STRING of string 
   | COMMA | COLON | SEMICOLON | LPAREN | RPAREN | LBRACK | RBRACK 
   | LBRACE | RBRACE | DOT 
-  | PLUS | MINUS | TIMES | DIVIDE | EQ | NEQ | LT | LE | GT | GE
+  | PLUS | MINUS | TIMES | DIVIDE | EQ | NEQ | LT | LE | GT | GE | UMINUS
   | AND | OR | ASSIGN
   | ARRAY | IF | THEN | ELSE | WHILE | FOR | TO | DO | LET | IN | END | OF 
   | BREAK | NIL
   | FUNCTION | VAR | TYPE 
 
-%nonterm  exp of A.exp | program of A.exp
+%nonterm
+    exp of A.exp | program of A.exp
+    | decs of A.dec list | dec of A.dec
+    | tydec of A.dec | ty of A.ty | tyfields of A.field list
+    | vardec of A.dec | fundec of A.dec
+    | lvalue of A.exp
+    | expseq of A.exp | exps of A.exp list | expList of A.exp list | expL of A.exp list
+    | funcall
+    | arith | comp | boolop 
+    | assign
+    | recinst | aggregateSeq | arrayinst
+    | ifblock | whileblock | forblock | letblock
 
 %pos int
 %verbose
@@ -23,18 +34,122 @@ structure A = Absyn
 
 %name Tiger
 
-%keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE 
-	DO OF NIL
+%keyword WHILE FOR TO BREAK LET IN END FUNCTION VAR TYPE ARRAY IF THEN ELSE	DO OF NIL
 
 %prefer THEN ELSE LPAREN
 
 %value ID ("bogus")
 %value INT (1)
 %value STRING ("")
+%right ELSE DO ASSIGN THEN
+%left OR
+%left AND
+%nonassoc EQ NEQ GT LT GE LE
+%left OF
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left UMINUS
+
 
 %%
 
-program	: exp				(exp)
-
+program	: exp				                                (exp)
 	
-exp: NIL		(A.NilExp)
+exp:  lvalue			                                    ()
+    | ID                                                    ()
+    | assign                                                ()
+    | recinst                                               ()
+    | arrayinst                                             ()
+    | NIL                                                   (A.NilExp)
+    | LPAREN RPAREN                                         ()
+    | INT                                                   ()
+    | STRING                                                ()
+    | LPAREN exp RPAREN                                     ()
+    | ifblock                                               ()    
+    | whileblock                                            ()    
+    | forblock                                              ()
+    | expseq                                                ()
+    | letblock                                              ()
+    | BREAK                                                 ()
+    | arith				                                    ()
+    | comp    				                                ()
+    | boolop 				                                ()
+    | funcall                                               ()
+    
+lvalue: ID DOT ID                                           ()    
+    | lvalue DOT ID                                         ()
+    | ID LBRACK exp RBRACK                                  ()
+    | lvalue LBRACK exp RBRACK                              ()    
+    
+assign: lvalue ASSIGN exp                                   ()
+
+recinst: ID LBRACE RBRACE                                   ()
+| ID LBRACE aggregateSeq RBRACE                             ()
+
+aggregateSeq: ID EQ exp                                     ()
+| aggregateSeq COMMA ID EQ exp                              ()
+
+arrayinst: ID LBRACK exp RBRACK OF exp                      ()
+    
+ifblock: IF exp THEN exp ELSE exp                           ()
+    | IF exp THEN exp                                       ()
+
+whileblock: WHILE exp DO exp                                ()
+
+forblock: FOR ID ASSIGN exp TO exp DO exp                   ()
+    
+letblock: LET decs IN exp END                               () 
+    
+expseq: LPAREN exp SEMICOLON exps RPAREN                    ()
+
+exps : exp                                                  ()
+    | exp SEMICOLON exps                                    ()
+    
+expList : LPAREN RPAREN                                     ()
+    | LPAREN expL RPAREN                                    ()
+
+expL : exp                                                  ()
+    | exp COMMA expL                                        ()    
+    
+decs: dec          			                                ()
+    | dec decs                                              ()
+
+dec: tydec				                                    ()
+    | vardec				                                ()
+    | fundec				                                ()
+
+tydec: TYPE ID EQ ty			                            ()
+
+ty: ID 	       	  			                                ()
+    | LBRACE RBRACE                                         ()
+    | LBRACE tyfields RBRACE		                        ()
+    | ARRAY OF ID     			                            ()
+
+tyfields: ID COLON ID			                            ()
+	| ID COLON ID COMMA tyfields	                        ()
+	
+vardec: VAR ID ASSIGN exp                                   ()
+    | VAR ID COLON ID ASSIGN exp                            ()
+
+fundec: FUNCTION ID LPAREN RPAREN EQ exp                    ()
+    | FUNCTION ID LPAREN tyfields RPAREN EQ exp             ()
+    | FUNCTION ID LPAREN RPAREN COLON ID EQ exp             ()
+    | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp    ()
+
+funcall: ID expList                                         ()	
+	
+arith: exp PLUS exp			                                ()
+	| exp MINUS exp			                                ()
+	| exp TIMES exp			                                ()
+	| exp DIVIDE exp		                                ()
+	| MINUS exp 	%prec UMINUS	                        ()
+	
+comp: exp EQ exp			                                ()
+	| exp NEQ exp			                                ()
+	| exp GT exp			                                ()
+	| exp LT exp			                                ()
+	| exp GE exp			                                ()
+	| exp LE exp			                                ()
+
+boolop: exp AND exp			                                ()
+	|exp OR exp			                                    ()
