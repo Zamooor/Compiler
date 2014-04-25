@@ -40,7 +40,7 @@ program	: exp				                                (exp)
 
 	
 exp: NIL		                                            (A.NilExp)
-    | ID                                                    (A.VarExp(A.SimpleVar(Symbol.symbol(ID))))
+    | ID                                                    (A.VarExp(A.SimpleVar(Symbol.symbol(ID), IDleft)))
     
    
 
