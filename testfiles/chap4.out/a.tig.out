@@ -1,0 +1,20 @@
+LetExp([
+ VarDec(col,false,NONE,
+  ArrayExp(intArray,
+   VarExp(
+    SimpleVar(N)),
+   IntExp(0))),
+ VarDec(row,false,NONE,
+  ArrayExp(intArray,
+   VarExp(
+    SimpleVar(N)),
+   IntExp(0))),
+ TypeDec[
+  (intArray,
+   ArrayTy(int))],
+ VarDec(N,false,NONE,
+  IntExp(8))],
+ SeqExp[
+  CallExp(print,[
+   StringExp("Success
+")])])
