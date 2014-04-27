@@ -18,7 +18,8 @@ fun sym(s) = Symbol.symbol(s)
 %nonterm
     exp of A.exp | program of A.exp
     | decs of A.dec list | dec of A.dec
-    | tydec of A.dec | ty of A.ty | tyfields of A.field list
+    | tydec of A.dec | tydecs of {name: A.symbol, ty: A.ty, pos: pos} list
+    | ty of A.ty | tyfields of A.field list
     | vardec of A.dec | fundec of A.dec
     | lvalue of A.var
     | expseq of A.exp | exps of (A.exp * pos) list | expList of A.exp list | expL of A.exp list
@@ -111,7 +112,11 @@ dec: tydec				                                    (tydec)
     | vardec				                                (vardec)
     | fundec				                                (fundec)
 
-tydec: TYPE ID EQ ty			                            (A.TypeDec([{name = sym(ID), ty = ty, pos = TYPEleft}]))
+tydec: tydecs			                                    (A.TypeDec(tydecs))
+
+tydecs: TYPE ID EQ ty                                       ([{name = sym(ID), ty = ty, pos = TYPEleft}])
+    | TYPE ID EQ ty tydecs                                   ([{name = sym(ID), ty = ty, pos = TYPEleft}] @ tydecs)
+   
 
 ty: ID 	       	  			                                (A.NameTy(sym(ID), IDleft))
     | LBRACE RBRACE                                         (A.RecordTy([]))
