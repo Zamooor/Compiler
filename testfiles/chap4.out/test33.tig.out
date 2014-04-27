@@ -1,0 +1,6 @@
+LetExp([
+ VarDec(a,false,NONE,
+  VarExp(
+   SimpleVar(rectype)))],
+ SeqExp[
+  IntExp(0)])

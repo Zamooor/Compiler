@@ -1,0 +1,10 @@
+LetExp([
+ VarDec(a,false,NONE,
+  ArrayExp(arrayty,
+   IntExp(10),
+   StringExp(" "))),
+ TypeDec[
+  (arrayty,
+   ArrayTy(int))]],
+ SeqExp[
+  IntExp(0)])
