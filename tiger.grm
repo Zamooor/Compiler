@@ -118,7 +118,7 @@ dec: tydec				                                            (tydec)
 tydec: tydecs			                                            (A.TypeDec(tydecs))
 
 tydecs: TYPE ID EQ ty                                               ([{name = sym(ID), ty = ty, pos = TYPEleft}])
-    | TYPE ID EQ ty tydecs                                          (tydecs @ [{name = sym(ID), ty = ty, pos = TYPEleft}] )
+    | TYPE ID EQ ty tydecs                                          ([{name = sym(ID), ty = ty, pos = TYPEleft}] @ tydecs)
    
 
 ty: ID 	       	  			                                        (A.NameTy(sym(ID), IDleft))
