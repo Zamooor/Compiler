@@ -90,7 +90,7 @@ recinst: ID LBRACE RBRACE                                           (A.RecordExp
 | ID LBRACE aggregateSeq RBRACE                                     (A.RecordExp({fields = aggregateSeq, typ = sym(ID), pos = IDleft}))
 
 aggregateSeq: ID EQ exp                                             ([(sym(ID), exp, IDleft)])
-| aggregateSeq COMMA ID EQ exp                                      ([(sym(ID), exp, aggregateSeqleft)] @ aggregateSeq)
+| aggregateSeq COMMA ID EQ exp                                      (aggregateSeq @ [(sym(ID), exp, aggregateSeqleft)] )
 
 arrayinst: ID LBRACK exp RBRACK OF exp                              (A.ArrayExp({typ = sym(ID), size = exp1, init = exp2, pos = IDleft}))
 
