@@ -6,3 +6,10 @@
 # KDE directory preferences
 .directory
 
+# Parser generated files
+tiger.grm.desc
+tiger.grm.sig
+tiger.grm.sml
+tiger.lex.sml
+output.txt
+
