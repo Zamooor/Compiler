@@ -26,7 +26,11 @@ struct
     fun transExp(venv, tenv, exp) = 
         let 
             fun 
-                trexp (A.OpExp{left, oper = A.PlusOp, right, pos}) = 
+				trexp (A.NilExp) = {exp = (), ty=Types.NIL}
+				| trexp (A.IntExp n) = {exp = (), ty=Types.INT}
+				| trexp (A.StringExp (s, p)) = {exp = (), ty = Types.STRING}
+				| trexp (A.ArrayExp {typ, size, init, pos}) = {exp = (), ty = Types.ARRAY (typ, ref ())}
+                | trexp (A.OpExp{left, oper = A.PlusOp, right, pos}) = 
                 (
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
