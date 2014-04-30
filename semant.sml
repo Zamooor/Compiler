@@ -217,8 +217,46 @@ struct
                     {exp=(), ty=T.INT}
                 )   
                 
-                (**** IF and BOOL OPS ****) (*TO DO: everything*)
+                (**** IF and BOOL OPS ****)
                 
+                | trexp (A.IfExp{test, then', else' = SOME elseExp, pos}) =
+                (                   
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
+                        val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp)
+                    in
+                        case tytest of T.INT =>
+                            if(tythen = tyelse) then
+                                {exp=(), ty=tythen}
+                            else
+                            (
+                                ErrorMsg.error pos "Branch types of if expression must match (it could be that you are using a boolean operator on something that doesn't resolve to an INT";
+                                {exp=(), ty=T.UNIT}
+                            )
+                        | _ => 
+                        (
+                            ErrorMsg.error pos "Expected to find an INT in the conditional";
+                            {exp=(), ty=T.UNIT}
+                        )                        
+                    end                    
+                )                
+                | trexp (A.IfExp{test, then', else' = NONE, pos}) =
+                (                   
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
+                    in
+                    (
+                        case tytest of T.INT => ()
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        case tythen of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Found no matching ELSE, expected the single branch to have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}            
+                )
                 (**** LITERALS ****) (*TO DO: STRINGS*)
                                                                                    
                 | trexp (A.IntExp int) = 
