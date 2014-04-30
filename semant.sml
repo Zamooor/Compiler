@@ -26,6 +26,9 @@ struct
     fun transExp(venv, tenv, exp) = 
         let 
             fun 
+            
+                (**** ARITHMETIC ****)
+                
                 trexp (A.OpExp{left, oper = A.PlusOp, right, pos}) = 
                 (
                     checkInt(trexp left, pos);
@@ -50,6 +53,9 @@ struct
                     checkInt(trexp right, pos);
                     {exp=(), ty=T.INT}
                 )
+                
+                (**** COMPARISON ****)
+                
                 | trexp (A.OpExp{left, oper = A.EqOp, right, pos}) =
                 (
                     let
@@ -210,6 +216,10 @@ struct
                     end;
                     {exp=(), ty=T.INT}
                 )   
+                
+                (**** IF and BOOL OPS ****) (*TO DO: everything*)
+                
+                (**** LITERALS ****) (*TO DO: STRINGS*)
                                                                                    
                 | trexp (A.IntExp int) = 
                 (
