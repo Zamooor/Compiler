@@ -1,17 +1,14 @@
 Group is 
 
-env.sml
-types.sml
-semant.sml
 absyn.sml
-prabsyn.sml
 errormsg.sml
 table.sig
 table.sml
 symbol.sml
 parse.sml
+prabsyn.sml
 tiger.lex
 tiger.grm
-$/basis.cm
 $/smlnj-lib.cm
 $/ml-yacc-lib.cm
+$/basis.cm
