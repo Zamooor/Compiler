@@ -19,7 +19,7 @@ struct
     
     fun checkInt ({exp, ty}, pos) = 
         case ty of Types.INT => ()
-                | _ => ErrorMsg.error pos "integer required"
+                | _ => ErrorMsg.error pos "integer required, found a " (* A way to print the type here would be great!*)
                 
     
                 
@@ -31,7 +31,29 @@ struct
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
                     {exp=(),ty=Types.INT}
-                )    
+                ) 
+                | trexp (A.OpExp{left, oper = A.MinusOp, right, pos}) =
+                (
+                    checkInt(trexp left, pos);
+                    checkInt(trexp right, pos);
+                    {exp=(), ty=T.INT}
+                )
+                | trexp (A.OpExp{left, oper = A.TimesOp, right, pos}) =
+                (
+                    checkInt(trexp left, pos);
+                    checkInt(trexp right, pos);
+                    {exp=(), ty=T.INT}
+                )
+                | trexp (A.OpExp{left, oper = A.DivideOp, right, pos}) =
+                (
+                    checkInt(trexp left, pos);
+                    checkInt(trexp right, pos);
+                    {exp=(), ty=T.INT}
+                )
+                | trexp (A.IntExp int) = 
+                (
+                    {exp=(),ty=Types.INT}
+                )
             (*    | trexp (A.recordExp ...) ...  *)
                 | trexp _ =
                 (
