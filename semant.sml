@@ -50,6 +50,36 @@ struct
                     checkInt(trexp right, pos);
                     {exp=(), ty=T.INT}
                 )
+                | trexp (A.OpExp{left, oper = A.EqOp, right, pos}) =
+                (
+                    let
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                    in
+                        case tyleft of T.INT =>
+                        (
+                            case tyright of T.INT => ()
+                            | _ => ErrorMsg.error pos "operator mismatch: found an INT and a ____, expected an INT and a INT"
+                        )
+                        (*| T.ARRAY => ((*check and see if the two array types match*)) *)
+                        (*| T.RECORD => ((*check and see if the record types match*)) *)
+                        | T.STRING => 
+                        (
+                            case tyright of T.STRING => ()
+                            | _ => ErrorMsg.error pos "operator mismatch: found a STRING and a ____, expected a STRING and a STRING"
+                        )
+                        | _ =>
+                        (
+                            case tyright of T.INT => ErrorMsg.error pos "operator missmatch: found a ____ and an INT, expected an INT and an INT"
+                            | T.STRING => ErrorMsg.error pos "operator mismatch: found a ____ and a STRING, expected a STRING and a STRING"
+                            (*| T.ARRAY => ErrorMsg.error pos "operator mismatch: found a ____ and an ARRAY, expected an ARRAY and an ARRAY" *)
+                            (*| T.RECORD => ErrorMsg.error pos "operator mismatch: found a ____ and a RECORD, expected a RECORD and a RECORD" *)
+                            | _ => ErrorMsg.error pos "Expecting a pair of type INT, STRING, ARRAY, or RECORD"
+                        )
+                        
+                    end;
+                    {exp=(), ty=T.INT}
+                )
                 | trexp (A.IntExp int) = 
                 (
                     {exp=(),ty=Types.INT}
