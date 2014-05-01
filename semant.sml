@@ -10,6 +10,7 @@ struct
     structure S = Symbol
     structure T = Types
     structure A = Absyn
+	structure E = Env
     
     structure Translate = struct type exp = unit end
 
@@ -21,7 +22,15 @@ struct
         case ty of Types.INT => ()
                 | _ => ErrorMsg.error pos "integer required, found a " (* A way to print the type here would be great!*)
                 
-    
+	fun actual_ty (Types.NAME (s, ty), pos) =
+		(case !ty of
+			NONE =>
+			(
+				ErrorMsg.error pos "Name type without actual type";
+				T.UNIT
+			)
+		|	SOME t => actual_ty (t, pos))
+	| actual_ty (t, pos) = t
                 
     fun transExp(venv, tenv, exp) = 
         let 
@@ -33,7 +42,7 @@ struct
                 (
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
-                    {exp=(),ty=Types.INT}
+                    {exp=(),ty=T.INT}
                 ) 
                 | trexp (A.OpExp{left, oper = A.MinusOp, right, pos}) =
                 (
@@ -220,19 +229,51 @@ struct
                 (**** IF and BOOL OPS ****) (*TO DO: everything*)
                 
                 (**** LITERALS ****) (*TO DO: STRINGS*)
-                                                                                   
+				| trexp (A.NilExp) = {exp = (), ty=Types.NIL}
+				| trexp (A.StringExp (s, p)) = {exp = (), ty = Types.STRING}
                 | trexp (A.IntExp int) = 
                 (
                     {exp=(),ty=Types.INT}
                 )
             (*    | trexp (A.recordExp ...) ...  *)
+				| trexp (A.LetExp {decs, body, pos}) =
+				(
+					transExp(venv, tenv, body)
+				)
+				| trexp (A.SeqExp expList) =
+				(
+					if (length (expList) = 0) then
+						{exp = (), ty = T.UNIT}
+					else
+						transExp(venv, tenv, (#1 (List.last expList)))
+				)
+				(**** VARIABLE EXPRESSIONS ****)
+				| trexp (A.VarExp var) = (print "TRACE TRACE TRACE\n\n\n"; trvar var)
                 | trexp _ =
                 (
-                    
                     {exp=(), ty=T.NIL}
                 ) 
-            
-            
+				(**** TRANSLATING ALL TYPES OF VARS ****)
+            and trvar (A.SimpleVar (id, pos)) =
+				(
+					case S.look(venv, id) of
+						SOME(E.VarEntry{ty}) => {exp = (), ty = actual_ty (ty, pos)}
+					|	NONE =>
+					(
+						ErrorMsg.error pos ("undefined variable " ^ S.name id);
+						{exp = (), ty = Types.INT}
+					)
+					| _ =>
+					(
+						ErrorMsg.error pos ("Something broke while looking up a var entry");
+						{exp = (), ty = Types.INT}
+					)
+				)
+				| trvar _ =
+				(
+					{exp = (), ty = T.UNIT}
+				)
+				
         in 
             trexp(exp)
         end

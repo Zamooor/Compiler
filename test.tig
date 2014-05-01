@@ -1,1 +1,7 @@
-1 & 2
+(1 & 2;
+let
+	var num2 := 6
+in
+	num + 1
+end
+)
