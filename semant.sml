@@ -226,19 +226,18 @@ struct
                         val {exp=_, ty=tythen} = transExp(venv, tenv, then')
                         val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp)
                     in
-                        case tytest of T.INT =>
-                            if(tythen = tyelse) then
-                                {exp=(), ty=tythen}
-                            else
-                            (
-                                ErrorMsg.error pos "Branch types of if expression must match (it could be that you are using a boolean operator on something that doesn't resolve to an INT";
-                                {exp=(), ty=T.UNIT}
-                            )
-                        | _ => 
+                    (
+                        case tytest of T.INT => ()                            
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        if(tythen = tyelse) then
+                            {exp=(), ty=tythen}
+                        else
                         (
-                            ErrorMsg.error pos "Expected to find an INT in the conditional";
+                            ErrorMsg.error pos "Branch types of if expression must match";
                             {exp=(), ty=T.UNIT}
-                        )                        
+                        )  
+                    )               
                     end                    
                 )                
                 | trexp (A.IfExp{test, then', else' = NONE, pos}) =
@@ -257,6 +256,51 @@ struct
                     end;     
                     {exp=(), ty=T.UNIT}            
                 )
+                
+                (**** LOOPS ****)  (* TO DO: finish for loop, read comments**)
+                
+                | trexp (A.WhileExp{test, body, pos})=
+                (
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                    in
+                    (
+                        case tytest of T.INT => ()
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        case tybody of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Body of loop must have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}   
+                ) 
+                
+                | trexp (A.ForExp{var,escape, lo, hi, body, pos})=
+                (
+                    let
+                        (* Need a tranlation of vars *)
+                        (* val {exp=_, ty=tyvar} = transExp(venv, tenv, var) *)
+                        val {exp=_, ty=tylo} = transExp(venv, tenv, lo)
+                        val {exp=_, ty=tyhi} = transExp(venv, tenv, hi)
+                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                    in
+                    (
+                        (** check that tyvar is an int **)
+                        
+                        case tylo of T.INT => ()
+                        | _ => ErrorMsg.error pos "lower bound of loop must be an integer";
+                        
+                        case tyhi of T.INT => ()
+                        | _ => ErrorMsg.error pos "higher bound of loop must be an integer";
+                        
+                        case tybody of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Body of loop must have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}   
+                )        
+                
                 (**** LITERALS ****) (*TO DO: STRINGS*)
                                                                                    
                 | trexp (A.IntExp int) = 
@@ -267,7 +311,7 @@ struct
                 | trexp _ =
                 (
                     
-                    {exp=(), ty=T.NIL}
+                    {exp=(), ty=T.UNIT}
                 ) 
             
             
