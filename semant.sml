@@ -225,7 +225,89 @@ struct
                     {exp=(), ty=T.INT}
                 )   
                 
-                (**** IF and BOOL OPS ****) (*TO DO: everything*)
+                (**** IF and BOOL OPS ****)
+                
+                | trexp (A.IfExp{test, then', else' = SOME elseExp, pos}) =
+                (                   
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
+                        val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp)
+                    in
+                    (
+                        case tytest of T.INT => ()                            
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        if(tythen = tyelse) then
+                            {exp=(), ty=tythen}
+                        else
+                        (
+                            ErrorMsg.error pos "Branch types of if expression must match";
+                            {exp=(), ty=T.UNIT}
+                        )  
+                    )               
+                    end                    
+                )                
+                | trexp (A.IfExp{test, then', else' = NONE, pos}) =
+                (                   
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
+                    in
+                    (
+                        case tytest of T.INT => ()
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        case tythen of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Found no matching ELSE, expected the single branch to have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}            
+                )
+                
+                (**** LOOPS ****)  (* TO DO: finish for loop, read comments**)
+                
+                | trexp (A.WhileExp{test, body, pos})=
+                (
+                    let
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
+                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                    in
+                    (
+                        case tytest of T.INT => ()
+                        | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
+                        
+                        case tybody of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Body of loop must have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}   
+                ) 
+                
+                | trexp (A.ForExp{var,escape, lo, hi, body, pos})=
+                (
+                    let
+                        (* Need a tranlation of vars *)
+                        (* val {exp=_, ty=tyvar} = transExp(venv, tenv, var) *)
+                        val {exp=_, ty=tylo} = transExp(venv, tenv, lo)
+                        val {exp=_, ty=tyhi} = transExp(venv, tenv, hi)
+                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                    in
+                    (
+                        (** check that tyvar is an int **)
+                        
+                        case tylo of T.INT => ()
+                        | _ => ErrorMsg.error pos "lower bound of loop must be an integer";
+                        
+                        case tyhi of T.INT => ()
+                        | _ => ErrorMsg.error pos "higher bound of loop must be an integer";
+                        
+                        case tybody of T.UNIT => ()
+                        | _ => ErrorMsg.error pos "Body of loop must have no value"
+                    )                          
+                    end;     
+                    {exp=(), ty=T.UNIT}   
+                )        
                 
                 (**** LITERALS ****) (*TO DO: STRINGS*)
 				| trexp (A.NilExp) = {exp = (), ty=Types.NIL}
@@ -250,7 +332,7 @@ struct
 				| trexp (A.VarExp var) = (print "TRACE TRACE TRACE\n\n\n"; trvar var)
                 | trexp _ =
                 (
-                    {exp=(), ty=T.NIL}
+                    {exp=(), ty=T.UNIT}
                 ) 
 				(**** TRANSLATING ALL TYPES OF VARS ****)
             and trvar (A.SimpleVar (id, pos)) =
