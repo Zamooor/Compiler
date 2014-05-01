@@ -10,7 +10,9 @@ struct
     structure S = Symbol
     structure T = Types
     structure A = Absyn
-	structure E = Env
+
+    structure E = Env
+
     
     structure Translate = struct type exp = unit end
 
@@ -317,19 +319,24 @@ struct
                     {exp=(),ty=Types.INT}
                 )
             (*    | trexp (A.recordExp ...) ...  *)
-				| trexp (A.LetExp {decs, body, pos}) =
-				(
-					transExp(venv, tenv, body)
-				)
-				| trexp (A.SeqExp expList) =
-				(
-					if (length (expList) = 0) then
-						{exp = (), ty = T.UNIT}
-					else
-						transExp(venv, tenv, (#1 (List.last expList)))
-				)
-				(**** VARIABLE EXPRESSIONS ****)
-				| trexp (A.VarExp var) = trvar var
+
+		| trexp(A.LetExp{decs,body,pos}) = 
+			let 
+				val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs)
+			in
+				transExp(venv',tenv',body)
+			end
+
+		| trexp (A.SeqExp expList) =
+		(
+			if (length (expList) = 0) then
+				{exp = (), ty = T.UNIT}
+			else
+				transExp(venv, tenv, (#1 (List.last expList)))
+		)
+		(**** VARIABLE EXPRESSIONS ****)
+		| trexp (A.VarExp var) = trvar var
+
                 | trexp _ =
                 (
                     {exp=(), ty=T.UNIT}
@@ -394,4 +401,40 @@ struct
     and transProg(exp: A.exp):unit = 
         (transExp(Env.base_venv, Env.base_tenv, exp);
         ()) (* this is stupid but I think is has to do with defining procedures... *)
+
+    and transTy (tenv, A.NameTy(name,_),pos) = 
+		(case Symbol.look (tenv, name) of
+       			NONE => T.NAME (name, ref NONE)
+     		(* Use Types.NAME (name, ref (SOME ty))) instead? *)
+    			 | SOME ty => ty)
+	|transTy(tenv, A.RecordTy(flist),pos) = 
+		Types.RECORD ((map (fn {name, escape=_, typ, pos=pos'} =>
+                       (name, (transTy (tenv, A.NameTy (typ, pos'), pos))))
+                   flist),
+              pos)
+	|transTy(tenv, A.ArrayTy(sym, pos'), pos) =
+		Types.ARRAY (transTy (tenv, A.NameTy (sym, pos'), pos), ref ())
+
+    and transDec (venv, tenv, decs) = 
+	let
+	    fun
+		trdec (A.VarDec{name, escape,typ=NONE,init,pos}) =
+		(
+			let 
+				val {exp,ty} = transExp (venv, tenv, init)
+	 		in 
+				{tenv = tenv, venv = S.enter(venv, name, E.VarEntry{ty=ty})}
+			end
+		)
+		|trdec(A.TypeDec[{name,ty,pos}]) =
+		(
+			{venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty,ref ()))}
+		)
+		| trdec _ =
+		(
+			{tenv = tenv, venv=venv}
+		)
+	in
+		List.last(map trdec decs)
+	end
 end
