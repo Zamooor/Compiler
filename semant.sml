@@ -378,7 +378,7 @@ struct
 						end
 					|	_ =>
 						(
-							ErrorMsg.error pos "Variable not found";
+							ErrorMsg.error pos "Record doesn't exist";
 							{exp = (), ty = Types.UNIT}
 						)
 				)
@@ -479,5 +479,3 @@ struct
 		List.last(map trdec decs)
 	end
 end
-
-			
