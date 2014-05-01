@@ -409,9 +409,8 @@ struct
     			 | SOME ty => ty)
 	|transTy(tenv, A.RecordTy(flist),pos) = 
 		Types.RECORD ((map (fn {name, escape=_, typ, pos=pos'} =>
-                       (name, (transTy (tenv, A.NameTy (typ, pos'), pos))))
-                   flist),
-              pos)
+                       (name, (transTy (tenv, A.NameTy (typ, pos'), pos)))) flist),
+              		pos)
 	|transTy(tenv, A.ArrayTy(sym, pos'), pos) =
 		Types.ARRAY (transTy (tenv, A.NameTy (sym, pos'), pos), ref ())
 
@@ -430,6 +429,48 @@ struct
 		(
 			{venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty,ref ()))}
 		)
+		(*|trdec(A.FunctionDec funDecs) =
+			let 				
+				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,post:A.pos}) =
+				
+					case S.look(tenv,typ)
+					of SOME t => {name=name, ty=t}
+					
+				fun  resTy  (result) = 
+				    case result of 
+					SOME(sym, pos) =>
+					(case S.look(tenv, sym) of
+					     NONE => (ErrorMsg.error pos "return type should be in scope" ; T.UNIT )
+					| SOME ty => ty )
+				    | NONE => T.UNIT
+
+				fun funDecs(venv1,decls) =
+					(case decls of
+					[] => venv1
+					|_=>
+					let
+						val {name: S.symbol
+				  		  ,params: A.field list
+				   		 ,result: (S.symbol * A.pos) option
+				  		  , body: A.exp
+				  		  , pos: A.pos} = List.hd decls
+						val tail = List.tl decls
+						val res = resTy(result)
+						val params' = map transparam params
+						val venv' =
+							(case S.look(venv1, name) of 
+
+      							NONE =>S.enter(venv1, name, E.FunEntry{formals = map #ty params', result = res})
+
+    							| SOME _ => (ErrorMsg.error pos ("Function already exists in : " ^ S.name name); 										venv1))
+					in 
+						funDecs(venv', tail)
+					end)	
+
+			in
+				funDecs(venv,funDecs)
+			end *)
+		
 		| trdec _ =
 		(
 			{tenv = tenv, venv=venv}
