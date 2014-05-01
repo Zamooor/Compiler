@@ -371,7 +371,7 @@ struct
 						end
 					|	_ =>
 						(
-							ErrorMsg.error pos "Variable not found";
+							ErrorMsg.error pos "Record doesn't exist";
 							{exp = (), ty = Types.UNIT}
 						)
 				)
@@ -395,5 +395,3 @@ struct
         (transExp(Env.base_venv, Env.base_tenv, exp);
         ()) (* this is stupid but I think is has to do with defining procedures... *)
 end
-    
-    
