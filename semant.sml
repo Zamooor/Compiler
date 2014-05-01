@@ -342,7 +342,7 @@ struct
                     {exp=(), ty=T.UNIT}
                 ) 
 				(**** TRANSLATING ALL TYPES OF VARS ****)
-            and trvar (A.SimpleVar (id, pos)) =
+    and trvar (A.SimpleVar (id, pos)) =
 				(
 					case S.look(venv, id) of
 						SOME(E.VarEntry{ty}) => {exp = (), ty = actual_ty (ty, pos)}
@@ -418,23 +418,34 @@ struct
     and transDec (venv, tenv, decs) = 
 	let
 	    fun
-		trdec (A.VarDec{name, escape,typ=NONE,init,pos}) =
+		trdec (A.VarDec{name, escape,typ=NONE,init,pos}, venv', tenv') =
 		(
 			let 
-				val {exp,ty} = transExp (venv, tenv, init)
+				val {exp,ty} = transExp (venv', tenv', init)
 	 		in 
-				{tenv = tenv, venv = S.enter(venv, name, E.VarEntry{ty=ty})}
+				{venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'}
 			end
 		)
-		|trdec(A.TypeDec[{name,ty,pos}]) =
-		(
-			{venv=venv,tenv=S.enter(tenv,name,transTy(tenv,ty,ref ()))}
-		)
+		|trdec(A.TypeDec tyDecList, venv', tenv') =
+		let
+			fun addType ({name, ty, pos}, venv'', tenv'') =
+				{venv=venv'',tenv=S.enter(tenv'',name,transTy(tenv'',ty,ref ()))}
+			and updateTypes (tdec, {venv = venv', tenv = tenv'}) = (
+				addType (tdec, venv', tenv')
+			)
+		in
+			foldl updateTypes {venv = venv', tenv = tenv'} tyDecList
+		end
 		| trdec _ =
 		(
+			print "TRACE\n\n";
 			{tenv = tenv, venv=venv}
 		)
+		and updateScope (dec, {venv, tenv}) = (
+			(trdec (dec, venv, tenv))
+		)
+			
 	in
-		List.last(map trdec decs)
+		foldl updateScope {venv = venv, tenv = tenv} decs
 	end
 end
