@@ -22,7 +22,7 @@ struct
         case ty of Types.INT => ()
                 | _ => ErrorMsg.error pos "integer required, found a " (* A way to print the type here would be great!*)
                 
-	fun actual_ty (Types.NAME (s, ty), pos) =
+	fun actual_ty (T.NAME (s, ty), pos) =
 		(case !ty of
 			NONE =>
 			(
@@ -329,7 +329,7 @@ struct
 						transExp(venv, tenv, (#1 (List.last expList)))
 				)
 				(**** VARIABLE EXPRESSIONS ****)
-				| trexp (A.VarExp var) = (print "TRACE TRACE TRACE\n\n\n"; trvar var)
+				| trexp (A.VarExp var) = trvar var
                 | trexp _ =
                 (
                     {exp=(), ty=T.UNIT}
@@ -342,19 +342,52 @@ struct
 					|	NONE =>
 					(
 						ErrorMsg.error pos ("undefined variable " ^ S.name id);
-						{exp = (), ty = Types.INT}
+						{exp = (), ty = T.INT}
 					)
 					| _ =>
 					(
 						ErrorMsg.error pos ("Something broke while looking up a var entry");
-						{exp = (), ty = Types.INT}
+						{exp = (), ty = T.INT}
 					)
 				)
-				| trvar _ =
+				| trvar (A.FieldVar(v, id, pos)) =
 				(
-					{exp = (), ty = T.UNIT}
+					case trvar v of
+						{exp = varExp, ty = record as T.RECORD(fields, _)} =>
+						let
+							fun findField((field, typ), NONE) =
+								(if id = field then SOME(typ) else NONE)
+							|	findField(_, fMatch as SOME(typ)) = fMatch
+						in
+						(
+							case (foldl findField NONE fields) of
+								SOME(typ) => {exp = (), ty = typ}
+							|	NONE => 
+							(
+								ErrorMsg.error pos ("Field " ^ S.name(id) ^ " does not exist");
+								{exp = (), ty = T.UNIT}
+							)
+						)
+						end
+					|	_ =>
+						(
+							ErrorMsg.error pos "Variable not found";
+							{exp = (), ty = Types.UNIT}
+						)
 				)
-				
+				| trvar (A.SubscriptVar(v, ex, pos)) =
+				let
+					val {exp = indExp, ty = expTy} = (trexp ex)
+				in
+					checkInt ((trexp ex), pos);
+					case trvar v of
+						{exp = varExp, ty = T.ARRAY(typ, _)} => {exp = (), ty = typ}
+					|	{exp, ty} =>
+					(
+						ErrorMsg.error pos "Variable is not an array";
+						{exp = (), ty = T.UNIT}
+					)
+				end
         in 
             trexp(exp)
         end
