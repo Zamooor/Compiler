@@ -339,14 +339,32 @@ struct
                     {exp=(), ty=T.UNIT}   
                 )        
                 
-                (**** LITERALS ****) (*TO DO: STRINGS*)
+                (**** LITERALS ****) 
 				| trexp (A.NilExp) = {exp = (), ty=Types.NIL}
 				| trexp (A.StringExp (s, p)) = {exp = (), ty = Types.STRING}
                 | trexp (A.IntExp int) = 
                 (
                     {exp=(),ty=Types.INT}
                 )
-            (*    | trexp (A.recordExp ...) ...  *)
+                | trexp(A.RecordExp {fields, typ, pos}) =
+                (
+                    let
+                        fun transFields (symbol, exp, pos) =
+                        (
+                            let
+                                val {exp,ty = rty} = transExp (venv, tenv, exp)
+		                    in
+		                    (
+			                   
+     		                    (symbol, rty)
+     		                )
+     		                end
+ 		                )
+                        val tfields = map (transFields) (fields)
+                    in
+                        {exp=(),ty=T.RECORD(tfields,ref())}              
+                    end
+                )
 
 		        | trexp(A.LetExp{decs,body,pos}) = 
 			        let 
@@ -434,13 +452,12 @@ struct
 
     and transTy (tenv, A.NameTy(name,_),pos) = 
 		(case Symbol.look (tenv, name) of
-       			NONE => T.NAME (name, ref NONE)
-     		(* Use Types.NAME (name, ref (SOME ty))) instead? *)
+       			NONE => T.NAME(name, ref NONE)
     			 | SOME ty => ty)
 	|transTy(tenv, A.RecordTy(flist),pos) = 
 		Types.RECORD ((map (fn {name, escape=_, typ, pos=pos'} =>
                        (name, (transTy (tenv, A.NameTy (typ, pos'), pos)))) flist),
-              		pos)
+              		ref())
 	|transTy(tenv, A.ArrayTy(sym, pos'), pos) =
 		Types.ARRAY (transTy (tenv, A.NameTy (sym, pos'), pos), ref ())
 
@@ -457,30 +474,59 @@ struct
 		)
 		| trdec (A.VarDec{name, escape,typ=SOME typ,init,pos}, venv', tenv') =
 		(
+		    
 			let 
 				val {exp,ty} = transExp (venv', tenv', init)
-				val actty = S.look(tenv', #1 typ)
+				val actty = actual_ty(getOpt(S.look(tenv', #1 typ), T.UNIT), pos)
 	 		in
-	 		    
-	 		    if getOpt(actty, T.UNIT) = ty then
-	 		        ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
-	 		    else
-	 		    (
-	 		        ErrorMsg.error pos "Could not assign a please figure out how to print type names!";
-	 		        {venv = venv', tenv = tenv'}
+ 		    (
+ 		        case actty of T.RECORD(rfields,_)=>
+	            (
+ 		            case ty of T.RECORD(lfields,_)=>
+ 		                if rfields = lfields then
+ 		                    ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
+                        else
+                        (
+                            ErrorMsg.error pos "Record types don't match";
+                            {venv = venv', tenv = tenv'}
+                        )
+                    |_ =>
+                    (
+                        ErrorMsg.error pos("Can not ititalize a record as a "^T.toString(ty));
+                        {venv = venv', tenv = tenv'}
+                    )
+                )
+                | _ => 
+                (
+	     		    if actty = ty then
+	     		        ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
+	     		    else
+	     		    (
+	     		        ErrorMsg.error pos("Could not initialize a "^T.toString(actty)^" to be a "^T.toString(ty)^"\n");
+	     		        {venv = venv', tenv = tenv'}
+     		        )
  		        )
-				
+			)
 			end
 		)
 		|trdec(A.TypeDec tyDecList, venv', tenv') =
 		let
 			fun addType ({name, ty, pos}, newvenv, newtenv) =
-				{venv=newvenv,tenv=S.enter(newtenv,name,transTy(newtenv,ty,ref ()))}
+		    (
+		        let
+		            val rtype = transTy(newtenv, ty, ref())
+	            in
+	            (
+			        {venv=newvenv,tenv=S.enter(newtenv,name,rtype)}
+		        )
+		        end
+	        )
 			and updateTypes (tdec, {venv, tenv}) = (
-				addType (tdec, venv, tenv)
+				addType (tdec, venv', tenv')
 			)
 		in
-			foldl updateTypes {venv = venv', tenv = tenv'} tyDecList
+			foldl updateTypes {venv = venv', tenv = tenv'} tyDecList 
+			(*{venv=venv',tenv=S.enter(tenv',S.symbol "number",T.NAME(S.symbol("int"), ref(SOME T.INT)))}*)
 		end
 		
 		(*|trdec(A.FunctionDec funDecs) =
@@ -535,6 +581,6 @@ struct
 		)
 			
 	in
-		foldl updateScope {venv = venv, tenv = tenv} decs
+		foldr updateScope {venv = venv, tenv = tenv} decs
 	end
 end
