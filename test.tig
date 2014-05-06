@@ -2,8 +2,8 @@
 let
 	type integer = number
 	type number = int
-	var num3 := 3
-	var num4 : number := 7
+	var num3 : number := 3
+	var num4 : int := 7
 in
 	num3 := num4
 end
