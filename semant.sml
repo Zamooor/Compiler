@@ -78,7 +78,15 @@ struct
                             | _ => ErrorMsg.error pos "operator mismatch: found an INT and a ____, expected an INT and a INT"
                         )
                         (*| T.ARRAY => ((*check and see if the two array types match*)) *)
-                        (*| T.RECORD => ((*check and see if the record types match*)) *)
+                        | T.RECORD(fields, _) => 
+                        (
+                            case tyright of T.RECORD(rfields, _) =>
+                                if fields = rfields then
+                                    ()
+                                else
+                                    ErrorMsg.error pos "Records are not of the same type"
+                            | _ => ErrorMsg.error pos "RVALUE is not of type record"
+                        )
                         | T.STRING => 
                         (
                             case tyright of T.STRING => ()
@@ -227,6 +235,26 @@ struct
                     {exp=(), ty=T.INT}
                 )   
                 
+                (**** ASSIGN ****)
+                
+                | trexp (A.AssignExp {var, exp, pos}) = 
+                (
+                    let 
+				        val {exp,ty = rty} = transExp (venv, tenv, exp)
+				        val {exp,ty=lty} = trvar(var)
+	         		in
+	         		    
+	         		    if lty = rty then ()
+	         		    else
+	         		        ErrorMsg.error pos "lvalue and rvalue in assign didn't match"
+	         		    
+				
+			        end;
+			        {exp=(), ty=T.UNIT}
+			        
+		        )
+                
+                
                 (**** IF and BOOL OPS ****)
                 
                 | trexp (A.IfExp{test, then', else' = SOME elseExp, pos}) =
@@ -320,81 +348,83 @@ struct
                 )
             (*    | trexp (A.recordExp ...) ...  *)
 
-		| trexp(A.LetExp{decs,body,pos}) = 
-			let 
-				val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs)
-			in
-				transExp(venv',tenv',body)
-			end
+		        | trexp(A.LetExp{decs,body,pos}) = 
+			        let 
+				        val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs)
+			        in
+				        transExp(venv',tenv',body)
+			        end
 
-		| trexp (A.SeqExp expList) =
-		(
-			if (length (expList) = 0) then
-				{exp = (), ty = T.UNIT}
-			else
-				transExp(venv, tenv, (#1 (List.last expList)))
-		)
-		(**** VARIABLE EXPRESSIONS ****)
-		| trexp (A.VarExp var) = trvar var
+		        | trexp (A.SeqExp expList) =
+		        (
+			        if (length (expList) = 0) then
+				        {exp = (), ty = T.UNIT}
+			        else
+			            List.last(map (fn x => transExp(venv, tenv, #1 x)) expList)
+				
+		        )
+		        (**** VARIABLE EXPRESSIONS ****)
+		        | trexp (A.VarExp var) = trvar var
 
-                | trexp _ =
-                (
-                    {exp=(), ty=T.UNIT}
-                ) 
-				(**** TRANSLATING ALL TYPES OF VARS ****)
-    and trvar (A.SimpleVar (id, pos)) =
-				(
-					case S.look(venv, id) of
-						SOME(E.VarEntry{ty}) => {exp = (), ty = actual_ty (ty, pos)}
-					|	NONE =>
-					(
-						ErrorMsg.error pos ("undefined variable " ^ S.name id);
-						{exp = (), ty = T.INT}
-					)
-					| _ =>
-					(
-						ErrorMsg.error pos ("Something broke while looking up a var entry");
-						{exp = (), ty = T.INT}
-					)
-				)
-				| trvar (A.FieldVar(v, id, pos)) =
-				(
-					case trvar v of
-						{exp = varExp, ty = record as T.RECORD(fields, _)} =>
-						let
-							fun findField((field, typ), NONE) =
-								(if id = field then SOME(typ) else NONE)
-							|	findField(_, fMatch as SOME(typ)) = fMatch
-						in
-						(
-							case (foldl findField NONE fields) of
-								SOME(typ) => {exp = (), ty = typ}
-							|	NONE => 
-							(
-								ErrorMsg.error pos ("Field " ^ S.name(id) ^ " does not exist");
-								{exp = (), ty = T.UNIT}
-							)
-						)
-						end
-					|	_ =>
-						(
-							ErrorMsg.error pos "Record doesn't exist";
-							{exp = (), ty = Types.UNIT}
-						)
-				)
-				| trvar (A.SubscriptVar(v, ex, pos)) =
-				let
-					val {exp = indExp, ty = expTy} = (trexp ex)
-				in
-					checkInt ((trexp ex), pos);
-					case trvar v of
-						{exp = varExp, ty = T.ARRAY(typ, _)} => {exp = (), ty = typ}
-					|	{exp, ty} =>
-					(
-						ErrorMsg.error pos "Variable is not an array";
-						{exp = (), ty = T.UNIT}
-					)
-				end
+                        | trexp _ =
+                        (
+                            {exp=(), ty=T.UNIT}
+                        ) 
+	            (**** TRANSLATING ALL TYPES OF VARS ****)
+                and trvar (A.SimpleVar (id, pos)) =
+		        (
+			        case S.look(venv, id) of
+				        SOME(E.VarEntry{ty}) => {exp = (), ty = actual_ty (ty, pos)}
+			        |	NONE =>
+			        (
+				        ErrorMsg.error pos ("undefined variable " ^ S.name id);
+				        {exp = (), ty = T.INT}
+			        )
+			        | _ =>
+			        (
+				        ErrorMsg.error pos ("Something broke while looking up a var entry");
+				        {exp = (), ty = T.INT}
+			        )
+		        )
+		        | trvar (A.FieldVar(v, id, pos)) =
+		        (
+		            let
+		                val {exp, ty} = trvar(v)
+		                fun findField((field, typ), NONE) =
+						            (if id = field then SOME(typ) else NONE)
+					            |	findField(_, fMatch as SOME(typ)) = fMatch
+	                in
+			            case ty of T.RECORD(fields, _)  =>
+		                (
+				            case (foldl findField NONE fields) of
+						            SOME(typ) => {exp = (), ty = typ}
+				            |	NONE => 
+				            (
+					            ErrorMsg.error pos ("Field " ^ S.name(id) ^ " does not exist");
+					            {exp = (), ty = T.UNIT}
+				            )
+			            )
+			            |	_ =>
+				        (
+					        ErrorMsg.error pos "Record doesn't exist";
+					        {exp = (), ty = Types.UNIT}
+				        )
+		            end
+			        
+		        )
+		        | trvar (A.SubscriptVar(v, ex, pos)) =
+		            let
+			            val {exp = indExp, ty = expTy} = (trexp ex)
+		            in
+			            checkInt ((trexp ex), pos);
+			            case trvar v of
+				            {exp = varExp, ty = T.ARRAY(typ, _)} => {exp = (), ty = typ}
+			            |	{exp, ty} =>
+			            (
+				            ErrorMsg.error pos "Variable is not an array";
+				            {exp = (), ty = T.UNIT}
+			            )
+		            end
         in 
             trexp(exp)
         end
@@ -425,16 +455,34 @@ struct
 				{venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'}
 			end
 		)
+		| trdec (A.VarDec{name, escape,typ=SOME typ,init,pos}, venv', tenv') =
+		(
+			let 
+				val {exp,ty} = transExp (venv', tenv', init)
+				val actty = S.look(tenv', #1 typ)
+	 		in
+	 		    
+	 		    if getOpt(actty, T.UNIT) = ty then
+	 		        ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
+	 		    else
+	 		    (
+	 		        ErrorMsg.error pos "Could not assign a please figure out how to print type names!";
+	 		        {venv = venv', tenv = tenv'}
+ 		        )
+				
+			end
+		)
 		|trdec(A.TypeDec tyDecList, venv', tenv') =
 		let
-			fun addType ({name, ty, pos}, venv'', tenv'') =
-				{venv=venv'',tenv=S.enter(tenv'',name,transTy(tenv'',ty,ref ()))}
-			and updateTypes (tdec, {venv = venv', tenv = tenv'}) = (
-				addType (tdec, venv', tenv')
+			fun addType ({name, ty, pos}, newvenv, newtenv) =
+				{venv=newvenv,tenv=S.enter(newtenv,name,transTy(newtenv,ty,ref ()))}
+			and updateTypes (tdec, {venv, tenv}) = (
+				addType (tdec, venv, tenv)
 			)
 		in
 			foldl updateTypes {venv = venv', tenv = tenv'} tyDecList
 		end
+		
 		(*|trdec(A.FunctionDec funDecs) =
 			let 				
 				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,post:A.pos}) =

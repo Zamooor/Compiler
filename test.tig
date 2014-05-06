@@ -1,10 +1,10 @@
 (1 & 2;
 let
-	type person = {age : int, name : string}
-	var num2 := 6
-	var rec1 : person := person {age = 10, name = "JohnnyBoy"}
+	type integer = number
+	type number = int
+	var num3 := 3
+	var num4 : number := 7
 in
-	num2 + 1;
-	rec1.age + 1
+	num3 := num4
 end
 )
