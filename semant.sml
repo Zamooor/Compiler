@@ -339,6 +339,31 @@ struct
                     {exp=(), ty=T.UNIT}   
                 )        
                 
+                (**** FUNCTION CALL ****)
+                
+                | trexp (A.CallExp{func, args, pos}) = 
+                (
+                    case S.look(venv, func) of SOME(E.FunEntry{formals, result}) =>
+                    (
+                        let 
+                            val argtypes = map #ty (map (fn x => transExp(venv, tenv, x)) args)
+                        in   
+                        (
+                            if argtypes = formals then
+                                ()
+                            else
+                                ErrorMsg.error pos ("function call doesn't match the signature of "^S.name(func));
+                            {exp = (), ty = result}
+                        )
+                        end
+                    )
+                    | _ => 
+                    (
+                        ErrorMsg.error pos (S.name(func)^" is not a function");
+                        {exp=(), ty=T.UNIT}
+                    )
+                )
+                
                 (**** LITERALS ****) 
 				| trexp (A.NilExp) = {exp = (), ty=Types.NIL}
 				| trexp (A.StringExp (s, p)) = {exp = (), ty = Types.STRING}
@@ -529,53 +554,63 @@ struct
 			(*{venv=venv',tenv=S.enter(tenv',S.symbol "number",T.NAME(S.symbol("int"), ref(SOME T.INT)))}*)
 		end
 		
-		(*| trdec(A.FunctionDec funDecs) =
+		| trdec(A.FunctionDec funDecs, venv', tenv') =
 			let 				
-				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,post:A.pos}) =
-				
-					case S.look(tenv,typ)
-					of SOME t => {name=name, ty=t}
+				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,pos:A.pos}) =
+				    let
+				        val ty = actual_ty(getOpt(S.look(tenv',  typ), T.UNIT), pos)
+			        in
+					    case ty of T.UNIT =>
+					    (
+					        ErrorMsg.impossible ("type "^S.name(typ)^" is undefined");
+					        {name=name, ty = T.UNIT}
+				        )
+				        | _ => {name=name, ty=ty}
+					    
+					end
+				    
+			    fun enterparam ({name,ty}, venv) = 
+			        S.enter(venv, name, E.VarEntry{ty=ty})
+			        
+
+				fun transFun(fundec as {name, params, body, pos, result=SOME(rt,rpos)}, {venv, tenv}) =
+					let 
+					    val SOME(result_ty) = S.look(tenv, rt)
+					    val params' = map transparam params
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = result_ty})
+					    val venv'' = foldl enterparam venv' params' 
+					    val rtype = actual_ty(getOpt(S.look(tenv,  rt), T.UNIT), pos)
+					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body)
+				    in
+				        transExp(venv'', tenv, body);
+				        if rtype = btype then
+				            ()
+			            else
+			                ErrorMsg.error pos "the function does not return the value declared";
+				        {venv=venv', tenv=tenv}
+			        end
+		        | transFun(fundec as {name, params, body, pos, result=NONE}, {venv, tenv}) = 
+		            let
+		                val params' = map transparam params
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = T.UNIT})
+					    val venv'' = foldl enterparam venv' params' 
+					    val rtype = T.UNIT
+					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body)
+				    in
+				        transExp(venv'', tenv, body);
+				        if rtype = btype then
+				            ()
+			            else
+			                ErrorMsg.error pos "A procedure must return no value";
+				        {venv=venv', tenv=tenv}
+			        end
 					
-				fun  resTy  (result) = 
-				    case result of 
-					SOME(sym, pos) =>
-					(case S.look(tenv, sym) of
-					     NONE => (ErrorMsg.error pos "return type should be in scope" ; T.UNIT )
-					| SOME ty => ty )
-				    | NONE => T.UNIT
-
-				fun funDecs(venv1,decls) =
-					(case decls of
-					[] => venv1
-					|_=>
-					let
-						val {name: S.symbol
-				  		  ,params: A.field list
-				   		 ,result: (S.symbol * A.pos) option
-				  		  , body: A.exp
-				  		  , pos: A.pos} = List.hd decls
-						val tail = List.tl decls
-						val res = resTy(result)
-						val params' = map transparam params
-						val venv' =
-							(case S.look(venv1, name) of 
-
-      							NONE =>S.enter(venv1, name, E.FunEntry{formals = map #ty params', result = res})
-
-    							| SOME _ => (ErrorMsg.error pos ("Function already exists in : " ^ S.name name); 										venv1))
-					in 
-						funDecs(venv', tail)
-					end)	
-
+					
 			in
-				funDecs(venv,funDecs)
+				foldl transFun {venv = venv', tenv = tenv'} funDecs
 			end
-		*)
-		| trdec _ =
-		(
-			print "TRACE\n\n";
-			{tenv = tenv, venv=venv}
-		)
+		
+		
 		and updateScope (dec, {venv, tenv}) = (
 			(trdec (dec, venv, tenv))
 		)
