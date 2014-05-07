@@ -2,6 +2,8 @@ signature TRANSLATE =
 sig
     type level
     type access
+	type exp
+	type frag
     
     val outermost : level (*????*)
     val newLevel : {parent: level, name: Temp.label, formals: bool list} -> level
@@ -15,6 +17,10 @@ struct
     structure T = Temp
     datatype level = Top | Level of {parent: level, name: T.label, formals: bool list, frame: F.frame}
     datatype access = Access of (level * F.access)
+	datatype exp = Ex of Tree.exp
+				|	Nx of Tree.stm
+				|	Cx of Temp.label * Temp.label -> Tree.stm
+	type frag = F.frag
     
     val outermost = Top
     

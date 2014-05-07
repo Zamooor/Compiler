@@ -1,7 +1,7 @@
 structure Semant :
 sig
     
-    val transProg: Absyn.exp -> unit
+    val transProg: Absyn.exp -> {exp : Translate.frag list, ty: Types.ty}
     
 end
 = 
@@ -10,15 +10,15 @@ struct
     structure S = Symbol
     structure T = Types
     structure A = Absyn
-
     structure E = Env
-
-    
-    structure Translate = struct type exp = unit end
+	structure Tr = Translate
+    structure A = Absyn
 
     type expty = {exp: Translate.exp, ty: Types.ty}
     
-    structure A = Absyn
+	val nestLvl = ref 0
+	fun incLvl () = nestLvl := !nestLvl + 1
+	fun decLvl () = nestLvl := !nestLvl - 1
     
     fun checkInt ({exp, ty}, pos) = 
         case ty of Types.INT => ()
@@ -496,9 +496,7 @@ struct
         in 
             trexp(exp)
         end
-    and transProg(exp: A.exp):unit = 
-        (transExp(Env.base_venv, Env.base_tenv, exp);
-        ()) (* this is stupid but I think is has to do with defining procedures... *)
+    
 
     and transTy (tenv, A.NameTy(name,_),pos) = 
 		(case Symbol.look (tenv, name) of
@@ -643,4 +641,11 @@ struct
 	in
 		foldr updateScope {venv = venv, tenv = tenv} decs
 	end
+	and transProg(exp: A.exp) = 
+		let
+			val programScope = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
+			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp);
+		in
+			{exp = [], ty = ty} (* this is stupid but I think is has to do with defining procedures... *)
+		end
 end

@@ -10,12 +10,12 @@ type number = int
     function f(a:number, b :string) :number = (a := 2; b = "str"; 1)
 	
 	type intArray = array of int
-	var wrongSize : string := "WRONG"
-	var rows := intArray [wrongSize] of (num3 * num4)
+	var rows := intArray [num4] of (num3 * num4)
 in
     num3 + num4;
     rec.age := 6;
     f(num4, "string");
-	rows[2] + rows[3]
+	rows[2] + rows[3];
+	f(num3, "STR LITERAL")
 end
 )
