@@ -8,7 +8,8 @@ type number = int
     var rec : person := person {age= num3, name = "STRING"}
 	
 	type intArray = array of int
-	var rows := intArray [num4] of (num3 * num4)
+	var wrongSize : string := "WRONG"
+	var rows := intArray [wrongSize] of (num3 * num4)
 in
     num3 + num4;
     rec.age := 6;
