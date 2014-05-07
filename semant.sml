@@ -346,6 +346,31 @@ struct
                 (
                     {exp=(),ty=Types.INT}
                 )
+				| trexp (A.ArrayExp {typ, size, init, pos}) =
+				let
+					val sizeTr = trexp size
+					val initTr = trexp init
+				in
+				(
+					checkInt(sizeTr, pos);
+					case S.look(tenv, typ) of
+						SOME (realAryType as T.ARRAY (ty, _)) =>
+						(
+							actual_ty (ty, pos);
+							{exp = (), ty = realAryType}
+						)
+					|	NONE =>
+						(
+							ErrorMsg.error pos ("Type is not defined: " ^ S.name typ);
+							{exp = (), ty = T.UNIT}
+						)
+					|	_ =>
+						(
+							ErrorMsg.error pos "Type is not of array type";
+							{exp = (), ty = T.UNIT}
+						)
+				)
+				end
                 | trexp(A.RecordExp {fields, typ, pos}) =
                 (
                     let
