@@ -529,7 +529,7 @@ struct
 			(*{venv=venv',tenv=S.enter(tenv',S.symbol "number",T.NAME(S.symbol("int"), ref(SOME T.INT)))}*)
 		end
 		
-		(*|trdec(A.FunctionDec funDecs) =
+		(*| trdec(A.FunctionDec funDecs) =
 			let 				
 				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,post:A.pos}) =
 				
@@ -569,8 +569,8 @@ struct
 
 			in
 				funDecs(venv,funDecs)
-			end *)
-		
+			end
+		*)
 		| trdec _ =
 		(
 			print "TRACE\n\n";
