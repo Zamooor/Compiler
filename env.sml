@@ -1,7 +1,7 @@
 signature ENV = 
 sig
     datatype enventry = VarEntry of {ty: Types.ty}
-                    | FunEntry of {formals: Types.ty list, result: Types.ty}
+                    | FunEntry of {formals: Types.ty list, result: Types.ty, level: Translate.level, label: Temp.label}
                     
     val base_tenv : Types.ty Symbol.table
     val base_venv : enventry Symbol.table
@@ -11,10 +11,12 @@ structure Env : ENV =
 struct
 
     datatype enventry = VarEntry of {ty: Types.ty}
-                    | FunEntry of {formals: Types.ty list, result: Types.ty}
+                    | FunEntry of {formals: Types.ty list, result: Types.ty, level: Translate.level, label: Temp.label}
 
     structure S = Symbol
     structure T = Types
+    structure Tr = Translate
+    structure Te = Temp
 
     type venv = enventry S.table
     type tenv = Types.ty S.table 
@@ -24,16 +26,16 @@ struct
     val basetypes = [("string", Types.STRING), 
                     ("int", Types.INT)]
     
-    val basefunctions = [("print", FunEntry{formals=[T.STRING], result=T.UNIT}),
-                        ("flush", FunEntry{formals=[], result=T.UNIT}),
-                        ("getchar", FunEntry{formals=[], result=T.STRING}),
-                        ("ord", FunEntry{formals=[T.STRING], result=T.INT}),
-                        ("chr", FunEntry{formals=[T.INT], result=T.STRING}),
-                        ("size", FunEntry{formals=[T.STRING], result=T.INT}),
-                        ("substring", FunEntry{formals=[T.STRING, T.INT, T.INT], result=T.STRING}),
-                        ("concat", FunEntry{formals=[T.STRING, T.STRING], result=T.STRING}),
-                        ("not", FunEntry{formals=[T.INT], result=T.INT}),
-                        ("exit", FunEntry{formals=[T.INT], result=T.UNIT})
+    val basefunctions = [("print", FunEntry{formals=[T.STRING], result=T.UNIT, level = Tr.outermost, label = Te.namedlabel("print")}),
+                        ("flush", FunEntry{formals=[], result=T.UNIT, level = Tr.outermost, label = Te.namedlabel("flush")}),
+                        ("getchar", FunEntry{formals=[], result=T.STRING, level = Tr.outermost, label = Te.namedlabel("getchar")}),
+                        ("ord", FunEntry{formals=[T.STRING], result=T.INT, level = Tr.outermost, label = Te.namedlabel("ord")}),
+                        ("chr", FunEntry{formals=[T.INT], result=T.STRING, level = Tr.outermost, label = Te.namedlabel("chr")}),
+                        ("size", FunEntry{formals=[T.STRING], result=T.INT, level = Tr.outermost, label = Te.namedlabel("size")}),
+                        ("substring", FunEntry{formals=[T.STRING, T.INT, T.INT], result=T.STRING, level = Tr.outermost, label = Te.namedlabel("substring")}),
+                        ("concat", FunEntry{formals=[T.STRING, T.STRING], result=T.STRING, level = Tr.outermost, label = Te.namedlabel("concat")}),
+                        ("not", FunEntry{formals=[T.INT], result=T.INT, level = Tr.outermost, label = Te.namedlabel("not")}),
+                        ("exit", FunEntry{formals=[T.INT], result=T.UNIT, level = Tr.outermost, label = Te.namedlabel("exit")})
                         ]
 
     fun enterTy((name, ty), tenv) = S.enter(tenv, S.symbol name, ty)

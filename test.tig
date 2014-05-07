@@ -16,6 +16,7 @@ in
     rec.age := 6;
     f(num4, "string");
 	rows[2] + rows[3];
-	f(num3, "STR LITERAL")
+	f(num3, "STR LITERAL");
+	for i := 1 to 6 do (i + 1; ())
 end
 )

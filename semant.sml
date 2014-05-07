@@ -12,13 +12,12 @@ struct
     structure A = Absyn
     structure E = Env
 	structure Tr = Translate
+	structure Te = Temp
     structure A = Absyn
 
     type expty = {exp: Translate.exp, ty: Types.ty}
     
-	val nestLvl = ref 0
-	fun incLvl () = nestLvl := !nestLvl + 1
-	fun decLvl () = nestLvl := !nestLvl - 1
+	val currLevel = Tr.outermost
     
     fun checkInt ({exp, ty}, pos) = 
         case ty of Types.INT => ()
@@ -34,7 +33,7 @@ struct
 		|	SOME t => actual_ty (t, pos))
 	| actual_ty (t, pos) = t
                 
-    fun transExp(venv, tenv, exp) = 
+    fun transExp(venv, tenv, exp, currLevel) = 
         let 
             fun 
                 (**** ARITHMETIC ****)
@@ -69,8 +68,8 @@ struct
                 | trexp (A.OpExp{left, oper = A.EqOp, right, pos}) =
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -107,8 +106,8 @@ struct
                 | trexp(A.OpExp{left, oper = A.NeqOp, right, pos})=
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -137,8 +136,8 @@ struct
                 | trexp (A.OpExp{left, oper = A.GtOp, right, pos})=
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -162,8 +161,8 @@ struct
                 | trexp (A.OpExp{left, oper = A.LtOp, right, pos})=
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -187,8 +186,8 @@ struct
                 | trexp (A.OpExp{left, oper = A.GeOp, right, pos})=
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -212,8 +211,8 @@ struct
                 | trexp (A.OpExp{left, oper = A.LeOp, right, pos})=
                 (
                     let
-                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left)
-                        val {exp=_, ty=tyright} = transExp(venv, tenv, right)
+                        val {exp=_, ty=tyleft} = transExp(venv, tenv, left, currLevel)
+                        val {exp=_, ty=tyright} = transExp(venv, tenv, right, currLevel)
                     in
                         case tyleft of T.INT =>
                         (
@@ -240,7 +239,7 @@ struct
                 | trexp (A.AssignExp {var, exp, pos}) = 
                 (
                     let 
-				        val {exp,ty = rty} = transExp (venv, tenv, exp)
+				        val {exp,ty = rty} = transExp (venv, tenv, exp, currLevel)
 				        val {exp,ty=lty} = trvar(var)
 	         		in
 	         		    
@@ -260,9 +259,9 @@ struct
                 | trexp (A.IfExp{test, then', else' = SOME elseExp, pos}) =
                 (                   
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
-                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
-                        val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp)
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then', currLevel)
+                        val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp, currLevel)
                     in
                     (
                         case tytest of T.INT => ()                            
@@ -281,8 +280,8 @@ struct
                 | trexp (A.IfExp{test, then', else' = NONE, pos}) =
                 (                   
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
-                        val {exp=_, ty=tythen} = transExp(venv, tenv, then')
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=_, ty=tythen} = transExp(venv, tenv, then', currLevel)
                     in
                     (
                         case tytest of T.INT => ()
@@ -295,13 +294,13 @@ struct
                     {exp=(), ty=T.UNIT}            
                 )
                 
-                (**** LOOPS ****)  (* TO DO: finish for loop, read comments**)
+                (**** LOOPS ****)  
                 
                 | trexp (A.WhileExp{test, body, pos})=
                 (
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test)
-                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=_, ty=tybody} = transExp(venv, tenv, body, currLevel)
                     in
                     (
                         case tytest of T.INT => ()
@@ -318,13 +317,16 @@ struct
                 (
                     let
                         (* Need a tranlation of vars *)
-                        (* val {exp=_, ty=tyvar} = transExp(venv, tenv, var) *)
-                        val {exp=_, ty=tylo} = transExp(venv, tenv, lo)
-                        val {exp=_, ty=tyhi} = transExp(venv, tenv, hi)
-                        val {exp=_, ty=tybody} = transExp(venv, tenv, body)
+                        (*val {exp=_, ty=tyvar} = transExp(venv, tenv, var) *)
+                        val {exp=_, ty=tylo} = transExp(venv, tenv, lo, currLevel)
+                        val {exp=_, ty=tyhi} = transExp(venv, tenv, hi, currLevel)
+                        
+                        val access = Tr.allocLocal(currLevel)(!escape)
+                        val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT})
+                        val {exp=_, ty=tybody} = transExp(venv', tenv, body, currLevel)
                     in
                     (
-                        (** check that tyvar is an int **)
+                        
                         
                         case tylo of T.INT => ()
                         | _ => ErrorMsg.error pos "lower bound of loop must be an integer";
@@ -343,10 +345,10 @@ struct
                 
                 | trexp (A.CallExp{func, args, pos}) = 
                 (
-                    case S.look(venv, func) of SOME(E.FunEntry{formals, result}) =>
+                    case S.look(venv, func) of SOME(E.FunEntry{formals, result, level, label}) =>
                     (
                         let 
-                            val argtypes = map #ty (map (fn x => transExp(venv, tenv, x)) args)
+                            val argtypes = map #ty (map (fn x => transExp(venv, tenv, x, currLevel)) args)
                         in   
                         (
                             if argtypes = formals then
@@ -402,7 +404,7 @@ struct
                         fun transFields (symbol, exp, pos) =
                         (
                             let
-                                val {exp,ty = rty} = transExp (venv, tenv, exp)
+                                val {exp,ty = rty} = transExp (venv, tenv, exp, currLevel)
 		                    in
 		                    (
 			                   
@@ -418,9 +420,9 @@ struct
 
 		        | trexp(A.LetExp{decs,body,pos}) = 
 			        let 
-				        val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs)
+				        val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs, currLevel)
 			        in
-				        transExp(venv',tenv',body)
+				        transExp(venv',tenv',body, currLevel)
 			        end
 
 		        | trexp (A.SeqExp expList) =
@@ -428,7 +430,7 @@ struct
 			        if (length (expList) = 0) then
 				        {exp = (), ty = T.UNIT}
 			        else
-			            List.last(map (fn x => transExp(venv, tenv, #1 x)) expList)
+			            List.last(map (fn x => transExp(venv, tenv, #1 x, currLevel)) expList)
 				
 		        )
 		        (**** VARIABLE EXPRESSIONS ****)
@@ -509,13 +511,14 @@ struct
 	|transTy(tenv, A.ArrayTy(sym, pos'), pos) =
 		Types.ARRAY (transTy (tenv, A.NameTy (sym, pos'), pos), ref ())
 
-    and transDec (venv, tenv, decs) = 
+    and transDec (venv, tenv, decs, currLevel) = 
 	let
 	    fun
 		trdec (A.VarDec{name, escape,typ=NONE,init,pos}, venv', tenv') =
 		(
 			let 
-				val {exp,ty} = transExp (venv', tenv', init)
+				val {exp,ty} = transExp (venv', tenv', init, currLevel)
+				val access = Tr.allocLocal(currLevel)(!escape)
 	 		in 
 				{venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'}
 			end
@@ -524,8 +527,9 @@ struct
 		(
 		    
 			let 
-				val {exp,ty} = transExp (venv', tenv', init)
+				val {exp,ty} = transExp (venv', tenv', init, currLevel)
 				val actty = actual_ty(getOpt(S.look(tenv', #1 typ), T.UNIT), pos)
+				val access = Tr.allocLocal(currLevel)(!escape)
 	 		in
  		    (
  		        case actty of T.RECORD(rfields,_)=>
@@ -563,8 +567,10 @@ struct
 		    (
 		        let
 		            val rtype = transTy(newtenv, ty, ref())
+		            
 	            in
 	            (
+	            
 			        {venv=newvenv,tenv=S.enter(newtenv,name,rtype)}
 		        )
 		        end
@@ -582,6 +588,7 @@ struct
 				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,pos:A.pos}) =
 				    let
 				        val ty = actual_ty(getOpt(S.look(tenv',  typ), T.UNIT), pos)
+				        val access = Tr.allocLocal(currLevel)(!escape)
 			        in
 					    case ty of T.UNIT =>
 					    (
@@ -600,12 +607,14 @@ struct
 					let 
 					    val SOME(result_ty) = S.look(tenv, rt)
 					    val params' = map transparam params
-					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = result_ty})
+					    val label = Te.newlabel()
+					    val formals = map ! (map #escape params)
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = result_ty, level = Tr.newLevel({parent=currLevel, name=label, formals=formals}),  label=label})
 					    val venv'' = foldl enterparam venv' params' 
 					    val rtype = actual_ty(getOpt(S.look(tenv,  rt), T.UNIT), pos)
-					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body)
+					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body, currLevel)
 				    in
-				        transExp(venv'', tenv, body);
+				        transExp(venv'', tenv, body, currLevel);
 				        if rtype = btype then
 				            ()
 			            else
@@ -615,12 +624,14 @@ struct
 		        | transFun(fundec as {name, params, body, pos, result=NONE}, {venv, tenv}) = 
 		            let
 		                val params' = map transparam params
-					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = T.UNIT})
+		                val label = Te.newlabel()
+		                val formals = map ! (map #escape params)
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = T.UNIT, level = Tr.newLevel({parent=currLevel, name=label, formals=formals}),  label=label})
 					    val venv'' = foldl enterparam venv' params' 
 					    val rtype = T.UNIT
-					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body)
+					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body, currLevel)
 				    in
-				        transExp(venv'', tenv, body);
+				        transExp(venv'', tenv, body, currLevel);
 				        if rtype = btype then
 				            ()
 			            else
@@ -643,9 +654,11 @@ struct
 	end
 	and transProg(exp: A.exp) = 
 		let
-			val programScope = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
-			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp);
+			 
+			val currLevel = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
+			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp, currLevel);
 		in
+		    currLevel = Tr.newLevel({parent = currLevel, name = Temp.namedlabel("tiger_main"), formals = []} );
 			{exp = [], ty = ty} (* this is stupid but I think is has to do with defining procedures... *)
 		end
 end
