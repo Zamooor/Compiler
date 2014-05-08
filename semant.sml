@@ -21,7 +21,7 @@ struct
     
     fun checkInt ({exp, ty}, pos) = 
         case ty of Types.INT => ()
-                | _ => ErrorMsg.error pos "integer required, found a " (* A way to print the type here would be great!*)
+                | _ => ErrorMsg.error pos ("integer required, found a " ^ (T.toString ty))
                 
 	fun actual_ty (T.NAME (s, ty), pos) =
 		(case !ty of
@@ -76,7 +76,17 @@ struct
                             case tyright of T.INT => ()
                             | _ => ErrorMsg.error pos "operator mismatch: found an INT and a ____, expected an INT and a INT"
                         )
-                        (*| T.ARRAY => ((*check and see if the two array types match*)) *)
+                        | T.ARRAY(typ, _) =>
+						(
+							case tyright of T.ARRAY(rtyp, _) =>
+							(
+								if (typ = rtyp) then
+									()
+								else
+									ErrorMsg.error pos "Array types do not match"
+							)
+							| _ => ErrorMsg.error pos ("Cannot compare an array with a " ^ (T.toString tyright))
+						)
                         | T.RECORD(fields, _) => 
                         (
                             case tyright of T.RECORD(rfields, _) =>

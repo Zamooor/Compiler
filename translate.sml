@@ -25,7 +25,7 @@ struct
     val outermost = Top
     
     fun newLevel({parent, name, formals}) = 
-        Level{parent = parent, name = name, formals = formals, frame = F.newFrame({name=name,formals=formals})}
+        Level{parent = parent, name = name, formals = formals, frame = F.newFrame({name=name,formals=(true :: formals)})}
     
         
     fun formals(level as Level{parent, name, formals, frame}) =

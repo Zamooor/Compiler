@@ -43,7 +43,7 @@ letters=[a-z|A-Z]+ ;
 %%
 <INITIAL,COMMENT>\n     => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
 
-<INITIAL>["]            => (inQuotes := true; stringYYpos := yypos; YYBEGIN STRING; continue());
+<INITIAL>["]            => (catedString := ""; inQuotes := true; stringYYpos := yypos; YYBEGIN STRING; continue());
 <STRING>"\\n"           => (catedString := (!catedString) ^ "\n"; continue());
 <STRING>"\\t"           => (catedString := (!catedString) ^ "\t"; continue());
 <STRING>("\\"([0-1][0-9]{2}|2[0-4][0-9]|25[0-5]))   

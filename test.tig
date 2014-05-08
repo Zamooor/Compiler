@@ -1,22 +1,9 @@
 (1 & 2;
 let
-type number = int
-	var num3 : number := 3
-	var num4 : int := 7
-	var str := "string"
-	
-    type person = {age:int, name:string}
-    var rec : person := person {age= num3, name = "STRING"}
-    function f(a:number, b :string) :number = (a := 2; b = "str"; 1)
-	
-	type intArray = array of int
-	var rows := intArray [num4] of (num3 * num4)
+	type number = int
+	type intArr = array of int
+	type stringArray = array of string
 in
-    num3 + num4;
-    rec.age := 6;
-    f(num4, "string");
-	rows[2] + rows[3];
-	f(num3, "STR LITERAL");
-	for i := 1 to 6 do (i + 1; ())
+()
 end
 )
