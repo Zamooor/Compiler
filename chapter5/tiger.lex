@@ -41,7 +41,7 @@ letters=[a-z|A-Z]+ ;
 
 
 %%
-<INITIAL,COMMENT>\n     => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
+<INITIAL,COMMENT>\n     => (catedString := ""; lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
 
 <INITIAL>["]            => (inQuotes := true; stringYYpos := yypos; YYBEGIN STRING; continue());
 <STRING>"\\n"           => (catedString := (!catedString) ^ "\n"; continue());
