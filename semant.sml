@@ -124,8 +124,26 @@ struct
                             case tyright of T.INT => ()
                             | _ => ErrorMsg.error pos "operator mismatch: found an INT and a ____, expected an INT and a INT"
                         )
-                        (*| T.ARRAY => ((*check and see if the two array types match*)) *)
-                        (*| T.RECORD => ((*check and see if the record types match*)) *)
+                        | T.ARRAY(typ, _) =>
+						(
+							case tyright of T.ARRAY(rtyp, _) =>
+							(
+								if (typ = rtyp) then
+									()
+								else
+									ErrorMsg.error pos "Array types do not match"
+							)
+							| _ => ErrorMsg.error pos ("Cannot compare an array with a " ^ (T.toString tyright))
+						)
+                        | T.RECORD(fields, _) => 
+                        (
+                            case tyright of T.RECORD(rfields, _) =>
+                                if fields = rfields then
+                                    ()
+                                else
+                                    ErrorMsg.error pos "Records are not of the same type"
+                            | _ => ErrorMsg.error pos "RVALUE is not of type record"
+                        )
                         | T.STRING => 
                         (
                             case tyright of T.STRING => ()
@@ -572,26 +590,21 @@ struct
 			end
 		)
 		|trdec(A.TypeDec tyDecList, venv', tenv') =
-		let
-			fun addType ({name, ty, pos}, newvenv, newtenv) =
-		    (
-		        let
-		            val rtype = transTy(newtenv, ty, ref())
-		            
-	            in
-	            (
-	            
-			        {venv=newvenv,tenv=S.enter(newtenv,name,rtype)}
-		        )
-		        end
-	        )
-			and updateTypes (tdec, {venv, tenv}) = (
-				addType (tdec, venv', tenv')
-			)
-		in
-			foldl updateTypes {venv = venv', tenv = tenv'} tyDecList 
-			(*{venv=venv',tenv=S.enter(tenv',S.symbol "number",T.NAME(S.symbol("int"), ref(SOME T.INT)))}*)
-		end
+        (
+            let
+
+                fun addType ({name, ty, pos}, venv'', tenv'') =
+                    {venv=venv'',tenv=S.enter(tenv'',name,transTy(tenv'',ty,ref ()))}
+
+                and updateTypes (tdec, {venv = venv', tenv = tenv'}) = 
+                (
+                    addType (tdec, venv', tenv')
+                )
+
+            in
+                foldl updateTypes {venv = venv', tenv = tenv'} tyDecList
+            end
+        )
 		
 		| trdec(A.FunctionDec funDecs, venv', tenv') =
 			let 				

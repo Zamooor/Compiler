@@ -198,7 +198,7 @@ let
 fun yyAction0 (strm, lastMatch : yymatch) = (yystrm := strm;
       (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue()))
 fun yyAction1 (strm, lastMatch : yymatch) = (yystrm := strm;
-      (inQuotes := true; stringYYpos := yypos; YYBEGIN STRING; continue()))
+      (catedString := ""; inQuotes := true; stringYYpos := yypos; YYBEGIN STRING; continue()))
 fun yyAction2 (strm, lastMatch : yymatch) = (yystrm := strm;
       (catedString := (!catedString) ^ "\n"; continue()))
 fun yyAction3 (strm, lastMatch : yymatch) = (yystrm := strm;
