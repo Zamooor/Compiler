@@ -13,7 +13,8 @@ let
 	var rec1 : person := person {age = 10, name = "JohnnyBoy"}
 in
 	num2 + 1;
-	arry = arry2;
+	arry;
+	arry2;
 	rec1.age + 1
 end
 )

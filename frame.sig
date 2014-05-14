@@ -31,7 +31,7 @@ sig
 	val exp : access -> Tree.exp -> Tree.exp
 	val string : (Temp.label * string) -> string
 	val externalCall : (string * Tree.exp list) -> Tree.exp
-	(*val procEntryExit1 : (frame * Tree.stm) -> Tree.stm*)
+	val procEntryExit1 : (frame * Tree.stm) -> Tree.stm
 	val procEntryExit2 : (frame * Assem.instr list) -> Assem.instr list
 	val procEntryExit3 : (frame * Assem.instr list) -> {prolog : string,
 														body : Assem.instr list,
