@@ -1,0 +1,16 @@
+EXP(
+ ESEQ(
+  SEQ(
+   MOVE(
+    TEMP t121,
+    CONST 8),
+   SEQ(
+    MOVE(
+     TEMP t122,
+     CONST 0),
+    MOVE(
+     TEMP t123,
+     CONST 0))),
+  CALL(
+   NAME print,
+    NAME L33)))

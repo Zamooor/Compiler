@@ -1,0 +1,8 @@
+EXP(
+ ESEQ(
+  MOVE(
+   TEMP t107,
+   BINOP(PLUS,
+    CONST 0,
+    CONST 0)),
+  TEMP t107))

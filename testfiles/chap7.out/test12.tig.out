@@ -1,0 +1,44 @@
+EXP(
+ ESEQ(
+  MOVE(
+   TEMP t126,
+   CONST 0),
+  ESEQ(
+   SEQ(
+    MOVE(
+     TEMP t127,
+     CONST 0),
+    SEQ(
+     CJUMP(LE,
+      TEMP t127,
+      CONST 100,
+      L38,L37),
+     SEQ(
+      LABEL L38,
+      SEQ(
+       EXP(
+        ESEQ(
+         MOVE(
+          TEMP t126,
+          BINOP(PLUS,
+           TEMP t126,
+           CONST 1)),
+         CONST 0)),
+       SEQ(
+        CJUMP(LT,
+         TEMP t127,
+         CONST 100,
+         L39,L37),
+        SEQ(
+         LABEL L39,
+         SEQ(
+          MOVE(
+           TEMP t127,
+           BINOP(PLUS,
+            TEMP t127,
+            CONST 1)),
+          SEQ(
+           JUMP(
+            NAME L39),
+           LABEL L37)))))))),
+   CONST 0)))

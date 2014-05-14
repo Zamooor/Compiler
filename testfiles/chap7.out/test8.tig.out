@@ -1,0 +1,24 @@
+EXP(
+ ESEQ(
+  SEQ(
+   CJUMP(GT,
+    CONST 10,
+    CONST 20,
+    L3,L4),
+   SEQ(
+    LABEL L3,
+    SEQ(
+     MOVE(
+      TEMP t107,
+      CONST 30),
+     SEQ(
+      JUMP(
+       NAME L5),
+      SEQ(
+       LABEL L4,
+       SEQ(
+        MOVE(
+         TEMP t107,
+         CONST 40),
+        LABEL L5)))))),
+  TEMP t107))

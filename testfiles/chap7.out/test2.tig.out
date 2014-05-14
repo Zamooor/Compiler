@@ -1,0 +1,6 @@
+EXP(
+ ESEQ(
+  MOVE(
+   TEMP t124,
+   CONST 0),
+  TEMP t124))

@@ -1,0 +1,10 @@
+EXP(
+ ESEQ(
+  SEQ(
+   MOVE(
+    TEMP t128,
+    CONST 0),
+   MOVE(
+    TEMP t129,
+    NAME L41)),
+  CONST 0))

@@ -1,0 +1,11 @@
+EXP(
+ ESEQ(
+  SEQ(
+   MOVE(
+    TEMP t130,
+    CONST 0),
+   EXP(
+    TEMP t131)),
+  CALL(
+   NAME L43,
+    CONST 2)))

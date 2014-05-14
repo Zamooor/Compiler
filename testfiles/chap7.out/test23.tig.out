@@ -1,0 +1,9 @@
+EXP(
+ ESEQ(
+  MOVE(
+   TEMP t110,
+   CONST 0),
+  ESEQ(
+   EXP(
+    CONST 0),
+   CONST 0)))

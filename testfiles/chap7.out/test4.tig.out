@@ -1,0 +1,35 @@
+EXP(
+ ESEQ(
+  EXP(
+   ESEQ(
+    SEQ(
+     CJUMP(EQ,
+      TEMP t110,
+      CONST 0,
+      L11,L12),
+     SEQ(
+      LABEL L11,
+      SEQ(
+       MOVE(
+        TEMP t111,
+        CONST 1),
+       SEQ(
+        JUMP(
+         NAME L13),
+        SEQ(
+         LABEL L12,
+         SEQ(
+          MOVE(
+           TEMP t111,
+           BINOP(MUL,
+            TEMP t110,
+            CALL(
+             NAME L10,
+              BINOP(MINUS,
+               TEMP t110,
+               CONST 1)))),
+          LABEL L13)))))),
+    TEMP t111)),
+  CALL(
+   NAME L10,
+    CONST 10)))

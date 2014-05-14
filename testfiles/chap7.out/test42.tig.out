@@ -1,0 +1,43 @@
+EXP(
+ ESEQ(
+  SEQ(
+   MOVE(
+    TEMP t132,
+    CONST 0),
+   SEQ(
+    MOVE(
+     TEMP t133,
+     CONST 0),
+    SEQ(
+     MOVE(
+      TEMP t134,
+      CONST 0),
+     SEQ(
+      MOVE(
+       TEMP t135,
+       CONST 0),
+      MOVE(
+       TEMP t136,
+       CONST 0))))),
+  ESEQ(
+   EXP(
+    CONST 0),
+   ESEQ(
+    EXP(
+     CONST 0),
+    ESEQ(
+     EXP(
+      CONST 0),
+     ESEQ(
+      EXP(
+       CONST 0),
+      ESEQ(
+       EXP(
+        CONST 0),
+       ESEQ(
+        EXP(
+         CONST 0),
+        ESEQ(
+         EXP(
+          CONST 0),
+         CONST 0)))))))))
