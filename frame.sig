@@ -28,6 +28,8 @@ sig
 	val name : frame -> Temp.label
 	val formals : frame -> access list
 	val allocLocal : frame -> bool -> access
+	val FP : Temp.temp
+	val wordSize: int
 	val exp : access -> Tree.exp -> Tree.exp
 	val string : (Temp.label * string) -> string
 	val externalCall : (string * Tree.exp list) -> Tree.exp

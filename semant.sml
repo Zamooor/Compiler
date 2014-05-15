@@ -40,27 +40,30 @@ struct
                 
                 trexp (A.OpExp{left, oper = A.PlusOp, right, pos}) = 
                 (
+                    (* fyi: checkInt was a bad idea!*)
+                    (* Cause now I have to trexp a second time to get the exp of left/right...*)
+                    (* -Jeff *)
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
-                    {exp=(),ty=T.INT}
+                    {exp=Tr.opTree(A.PlusOp, #exp (trexp left), #exp (trexp right)),ty=T.INT}
                 ) 
                 | trexp (A.OpExp{left, oper = A.MinusOp, right, pos}) =
                 (
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.MinusOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )
                 | trexp (A.OpExp{left, oper = A.TimesOp, right, pos}) =
                 (
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.TimesOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )
                 | trexp (A.OpExp{left, oper = A.DivideOp, right, pos}) =
                 (
                     checkInt(trexp left, pos);
                     checkInt(trexp right, pos);
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.DivideOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )
                 
                 (**** COMPARISON ****)
@@ -111,7 +114,7 @@ struct
                         )
                         
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.EqOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )
                 | trexp(A.OpExp{left, oper = A.NeqOp, right, pos})=
                 (
@@ -159,7 +162,7 @@ struct
                         )
                         
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.NeqOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )
                 | trexp (A.OpExp{left, oper = A.GtOp, right, pos})=
                 (
@@ -184,7 +187,7 @@ struct
                             | _ => ErrorMsg.error pos "Expecting a pair of type INT, STRING, ARRAY, or RECORD"
                         )
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.GtOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 ) 
                 | trexp (A.OpExp{left, oper = A.LtOp, right, pos})=
                 (
@@ -209,7 +212,7 @@ struct
                             | _ => ErrorMsg.error pos "Expecting a pair of type INT, STRING, ARRAY, or RECORD"
                         )
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.LtOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )    
                 | trexp (A.OpExp{left, oper = A.GeOp, right, pos})=
                 (
@@ -234,7 +237,7 @@ struct
                             | _ => ErrorMsg.error pos "Expecting a pair of type INT, STRING, ARRAY, or RECORD"
                         )
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.GeOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )          
                 | trexp (A.OpExp{left, oper = A.LeOp, right, pos})=
                 (
@@ -259,7 +262,7 @@ struct
                             | _ => ErrorMsg.error pos "Expecting a pair of type INT, STRING, ARRAY, or RECORD"
                         )
                     end;
-                    {exp=(), ty=T.INT}
+                    {exp=Tr.opTree(A.LeOp, #exp (trexp left), #exp (trexp right)), ty=T.INT}
                 )   
                 
                 (**** ASSIGN ****)
@@ -267,17 +270,19 @@ struct
                 | trexp (A.AssignExp {var, exp, pos}) = 
                 (
                     let 
-				        val {exp,ty = rty} = transExp (venv, tenv, exp, currLevel)
-				        val {exp,ty=lty} = trvar(var)
+				        val {exp=rexp,ty = rty} = transExp (venv, tenv, exp, currLevel)
+				        val {exp=lexp,ty=lty} = trvar(var)
 	         		in
 	         		    
 	         		    if lty = rty then ()
 	         		    else
-	         		        ErrorMsg.error pos "lvalue and rvalue in assign didn't match"
+	         		        ErrorMsg.error pos "lvalue and rvalue in assign didn't match";
+         		        
+         		        {exp=Tr.assign(rexp, lexp), ty=T.UNIT}
 	         		    
 				
-			        end;
-			        {exp=(), ty=T.UNIT}
+			        end
+			        
 			        
 		        )
                 
@@ -287,20 +292,19 @@ struct
                 | trexp (A.IfExp{test, then', else' = SOME elseExp, pos}) =
                 (                   
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
-                        val {exp=_, ty=tythen} = transExp(venv, tenv, then', currLevel)
-                        val {exp=_, ty=tyelse} = transExp(venv, tenv, elseExp, currLevel)
+                        val {exp=expTest, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=expThen, ty=tythen} = transExp(venv, tenv, then', currLevel)
+                        val {exp=expElse, ty=tyelse} = transExp(venv, tenv, elseExp, currLevel)
                     in
                     (
                         case tytest of T.INT => ()                            
                         | _ => ErrorMsg.error pos "Expected to find an INT in the conditional";
                         
                         if(tythen = tyelse) then
-                            {exp=(), ty=tythen}
+                            {exp=Tr.ifElse(expTest, expThen, expElse), ty=tythen}
                         else
                         (
-                            ErrorMsg.error pos "Branch types of if expression must match";
-                            {exp=(), ty=T.UNIT}
+                            ErrorMsg.impossible "Branch types of if expression must match"
                         )  
                     )               
                     end                    
@@ -308,8 +312,8 @@ struct
                 | trexp (A.IfExp{test, then', else' = NONE, pos}) =
                 (                   
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
-                        val {exp=_, ty=tythen} = transExp(venv, tenv, then', currLevel)
+                        val {exp=expTest, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=expThen, ty=tythen} = transExp(venv, tenv, then', currLevel)
                     in
                     (
                         case tytest of T.INT => ()
@@ -317,9 +321,10 @@ struct
                         
                         case tythen of T.UNIT => ()
                         | _ => ErrorMsg.error pos "Found no matching ELSE, expected the single branch to have no value"
-                    )                          
-                    end;     
-                    {exp=(), ty=T.UNIT}            
+                    );
+                    
+                        {exp=Tr.ifThen(expTest, expThen), ty=T.UNIT}                                
+                    end             
                 )
                 
                 (**** LOOPS ****)  
@@ -327,8 +332,8 @@ struct
                 | trexp (A.WhileExp{test, body, pos})=
                 (
                     let
-                        val {exp=_, ty=tytest} = transExp(venv, tenv, test, currLevel)
-                        val {exp=_, ty=tybody} = transExp(venv, tenv, body, currLevel)
+                        val {exp=expTest, ty=tytest} = transExp(venv, tenv, test, currLevel)
+                        val {exp=expBody, ty=tybody} = transExp(venv, tenv, body, currLevel)
                     in
                     (
                         case tytest of T.INT => ()
@@ -336,22 +341,21 @@ struct
                         
                         case tybody of T.UNIT => ()
                         | _ => ErrorMsg.error pos "Body of loop must have no value"
-                    )                          
-                    end;     
-                    {exp=(), ty=T.UNIT}   
+                    );     
+                    
+                    {exp=Tr.whileTree(expTest, expBody), ty=T.UNIT}                           
+                    end  
                 ) 
                 
                 | trexp (A.ForExp{var,escape, lo, hi, body, pos})=
                 (
                     let
-                        (* Need a tranlation of vars *)
-                        (*val {exp=_, ty=tyvar} = transExp(venv, tenv, var) *)
-                        val {exp=_, ty=tylo} = transExp(venv, tenv, lo, currLevel)
-                        val {exp=_, ty=tyhi} = transExp(venv, tenv, hi, currLevel)
+                        val {exp=expLo, ty=tylo} = transExp(venv, tenv, lo, currLevel)
+                        val {exp=expHi, ty=tyhi} = transExp(venv, tenv, hi, currLevel)
                         
                         val access = Tr.allocLocal(currLevel)(!escape)
                         val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT})
-                        val {exp=_, ty=tybody} = transExp(venv', tenv, body, currLevel)
+                        val {exp=expBody, ty=tybody} = transExp(venv', tenv, body, currLevel)
                     in
                     (
                         
@@ -365,9 +369,15 @@ struct
                         case tybody of T.UNIT => ()
                         | _ => ErrorMsg.error pos "Body of loop must have no value"
                     )                          
-                    end;     
-                    {exp=(), ty=T.UNIT}   
-                )        
+                    end;  
+                    (* first attempt please help *)
+                    (*{exp=transExp(venv, tenv, A.LetExp({[A.VarDec{var, True, SOME tylo, lo, pos}, A.VarDec{S.symbol('limit'), True, SOME tyhi, hi, pos}], A.WhileExp{A.OpExp{lo, A.LeOp, hi}, A.SeqExp([(body, pos), (IfExp({A.OpExp{ , ty=T.UNIT}   *)
+                    
+                    {exp=(#exp (transExp(venv, tenv, A.OpExp{left=lo, oper=A.PlusOp, right=hi, pos = pos}, currLevel))), ty = T.UNIT}
+                )  
+                
+                | trexp (A.BreakExp pos) = 
+                    {exp=Tr.breakJump(Temp.newlabel()) , ty = T.UNIT  }    
                 
                 (**** FUNCTION CALL ****)
                 
@@ -383,26 +393,29 @@ struct
                                 ()
                             else
                                 ErrorMsg.error pos ("function call doesn't match the signature of "^S.name(func));
-                            {exp = (), ty = result}
+                            (* maybe have to add extra formal for static link? *)
+                            {exp = Tr.call(label, formals), ty = result}
                         )
                         end
                     )
                     | _ => 
                     (
-                        ErrorMsg.error pos (S.name(func)^" is not a function");
-                        {exp=(), ty=T.UNIT}
+                        ErrorMsg.impossible (S.name(func)^" is not a function")
                     )
                 )
                 
                 (**** LITERALS ****) 
-				| trexp (A.NilExp) = {exp = (), ty=Types.NIL}
-				| trexp (A.StringExp (s, p)) = {exp = (), ty = Types.STRING}
+				| trexp (A.NilExp) = {exp = Tr.intConst(0), ty=Types.NIL}
+				| trexp (A.StringExp (s, p)) = {exp = Tr.stringConst(s), ty = Types.STRING}
                 | trexp (A.IntExp int) = 
                 (
-                    {exp=(),ty=Types.INT}
+                    {exp=Tr.intConst(int),ty=Types.INT}
                 )
 				| trexp (A.ArrayExp {typ, size, init, pos}) =
 				let
+				    (* again checkInt making me do silly redundant things... *)
+				    val {exp=expSize, ty=tySize} = transExp(venv, tenv, size, currLevel)
+			        val {exp=expInit, ty=tyInit} = transExp(venv, tenv, init, currLevel)
 					val sizeTr = trexp size
 					val initTr = trexp init
 				in
@@ -412,17 +425,17 @@ struct
 						SOME (realAryType as T.ARRAY (ty, _)) =>
 						(
 							actual_ty (ty, pos);
-							{exp = (), ty = realAryType}
+							{exp = Tr.arrayConst(expSize, expInit), ty = realAryType}
 						)
 					|	NONE =>
 						(
 							ErrorMsg.error pos ("Type is not defined: " ^ S.name typ);
-							{exp = (), ty = T.UNIT}
+							{exp = Tr.arrayConst(expSize, expInit), ty = T.UNIT}
 						)
 					|	_ =>
 						(
 							ErrorMsg.error pos "Type is not of array type";
-							{exp = (), ty = T.UNIT}
+							{exp = Tr.arrayConst(expSize, expInit), ty = T.UNIT}
 						)
 				)
 				end
@@ -432,56 +445,57 @@ struct
                         fun transFields (symbol, exp, pos) =
                         (
                             let
-                                val {exp,ty = rty} = transExp (venv, tenv, exp, currLevel)
+                                val {exp=expField,ty = rty} = transExp (venv, tenv, exp, currLevel)
 		                    in
 		                    (
 			                   
-     		                    (symbol, rty)
+     		                    ((symbol, rty), expField)
      		                )
      		                end
  		                )
                         val tfields = map (transFields) (fields)
                     in
-                        {exp=(),ty=T.RECORD(tfields,ref())}              
+                        {exp=Tr.recordConst(map #2 tfields, map #1 (map #1 tfields)),ty=T.RECORD( map #1 tfields,ref())}              
                     end
                 )
-
+                
+                (**** LET ****)
+    
 		        | trexp(A.LetExp{decs,body,pos}) = 
 			        let 
 				        val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs, currLevel)
 			        in
 				        transExp(venv',tenv',body, currLevel)
 			        end
+                
+                (**** SEQ ****)
 
 		        | trexp (A.SeqExp expList) =
 		        (
 			        if (length (expList) = 0) then
-				        {exp = (), ty = T.UNIT}
+				        {exp = Tr.seq([]), ty = T.UNIT}
 			        else
 			            List.last(map (fn x => transExp(venv, tenv, #1 x, currLevel)) expList)
 				
 		        )
-		        (**** VARIABLE EXPRESSIONS ****)
-		        | trexp (A.VarExp var) = trvar var
-
-                        | trexp _ =
-                        (
-                            {exp=(), ty=T.UNIT}
-                        ) 
+		        
+	        	(**** VARIABLE EXPRESSIONS ****)
+                | trexp (A.VarExp var) = trvar var
+		     
 	            (**** TRANSLATING ALL TYPES OF VARS ****)
                 and trvar (A.SimpleVar (id, pos)) =
 		        (
 			        case S.look(venv, id) of
-				        SOME(E.VarEntry{ty}) => {exp = (), ty = actual_ty (ty, pos)}
+				        SOME(E.VarEntry{ty}) => {exp = Tr.var(id), ty = actual_ty (ty, pos)}
 			        |	NONE =>
 			        (
 				        ErrorMsg.error pos ("undefined variable " ^ S.name id);
-				        {exp = (), ty = T.INT}
+				        {exp = Tr.var(id), ty = T.UNIT}
 			        )
 			        | _ =>
 			        (
 				        ErrorMsg.error pos ("Something broke while looking up a var entry");
-				        {exp = (), ty = T.INT}
+				        {exp = Tr.var(id), ty = T.UNIT}
 			        )
 		        )
 		        | trvar (A.FieldVar(v, id, pos)) =
@@ -495,17 +509,15 @@ struct
 			            case ty of T.RECORD(fields, _)  =>
 		                (
 				            case (foldl findField NONE fields) of
-						            SOME(typ) => {exp = (), ty = typ}
+						            SOME(typ) => {exp = Tr.recordVar(id, exp), ty = typ}
 				            |	NONE => 
 				            (
-					            ErrorMsg.error pos ("Field " ^ S.name(id) ^ " does not exist");
-					            {exp = (), ty = T.UNIT}
+					            ErrorMsg.impossible ("Field " ^ S.name(id) ^ " does not exist")
 				            )
 			            )
 			            |	_ =>
 				        (
-					        ErrorMsg.error pos "Record doesn't exist";
-					        {exp = (), ty = Types.UNIT}
+					        ErrorMsg.impossible "Record doesn't exist"
 				        )
 		            end
 			        
@@ -516,11 +528,10 @@ struct
 		            in
 			            checkInt ((trexp ex), pos);
 			            case trvar v of
-				            {exp = varExp, ty = T.ARRAY(typ, _)} => {exp = (), ty = typ}
+				            {exp = varExp, ty = T.ARRAY(typ, _)} => {exp = Tr.arrayVar(indExp, varExp), ty = typ}
 			            |	{exp, ty} =>
 			            (
-				            ErrorMsg.error pos "Variable is not an array";
-				            {exp = (), ty = T.UNIT}
+				            ErrorMsg.impossible "Variable is not an array"
 			            )
 		            end
         in 

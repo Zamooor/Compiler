@@ -51,7 +51,8 @@ It looked ugly and non-standard to me for the AMD registers so I used lower case
   val rbp  = Temp.newtemp()
   val esp  = Temp.newtemp()
   
- 
+  val FP = Temp.newtemp()
+  val wordSize = 8
  
   val registers = [ "rsp","rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" ]
   val registerTemps = [rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15]
@@ -126,7 +127,7 @@ It looked ugly and non-standard to me for the AMD registers so I used lower case
 (* A call to one of our "library" routines implemented in the C code runtime.c *)			      
   fun externalCall (str, args) = Tree.CALL(Tree.NAME(Temp.namedlabel str), args)
 					  
-(*(* DOn't really need the body of this till chapter 7 *) 
+(* DOn't really need the body of this till chapter 7 *) 
   fun procEntryExit1 (frame, stm) =
       let
 	  val saved = calleesaves
@@ -148,7 +149,7 @@ It looked ugly and non-standard to me for the AMD registers so I used lower case
 			      
       in
 	   stm
-      end*)
+      end
 	  
   structure A = Assem
   (* Pg 209 *)

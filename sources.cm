@@ -8,6 +8,7 @@ frame.sig
 temp.sig
 temp.sml
 tree.sml
+printtree.sml
 translate.sml
 types.sml
 semant.sml
