@@ -20,8 +20,9 @@ sig
     val call: Temp.label * Types.ty list -> exp
     val arrayConst: exp* exp -> exp
     val recordConst: exp list * Symbol.symbol list  -> exp
-    val seq: Tree.stm list -> exp
+    val seq: exp list -> exp
     val var: Symbol.symbol -> exp
+    val simpleVar: access * level -> exp
     val recordVar: Symbol.symbol * exp -> exp
     val arrayVar: exp * exp -> exp
     
@@ -39,7 +40,7 @@ struct
     structure Tr = Tree
     structure A = Absyn
     
-    datatype level = Top | Level of {parent: level, name: T.label, formals: bool list, frame: F.frame}
+    datatype level = Top | Level of {parent: level, name: T.label, formals: bool list, frame: F.frame, unique: unit ref}
     datatype access = Access of (level * F.access)
 	datatype exp = Ex of Tree.exp
 				|	Nx of Tree.stm
@@ -51,7 +52,7 @@ struct
             val r = Temp.newtemp()
             val t = Temp.newlabel()
             val f = Temp.newlabel()
-        in            
+        in
             Tr.ESEQ(Tr.SEQ(Tr.MOVE(Tr.TEMP r, Tr.CONST 1),
                             Tr.SEQ(genstm(t,f),
                             Tr.SEQ(Tr.LABEL f,
@@ -78,10 +79,11 @@ struct
     val outermost = Top
     
     fun newLevel({parent, name, formals}) = 
-        Level{parent = parent, name = name, formals = formals, frame = F.newFrame({name=name,formals=(true :: formals)})}
+        Level{parent = parent, name = name, formals = formals, 
+		frame = F.newFrame({name=name,formals=(true :: formals)}), unique = ref()}
     
         
-    fun formals(level as Level{parent, name, formals, frame}) =
+    fun formals(level as Level{parent, name, formals, frame, unique}) =
     (
         case F.formals frame of [] => 
         (
@@ -92,12 +94,8 @@ struct
     )
     | formals(Top) = []
     
-    fun allocLocal (level as Level {parent, name, frame, formals}) escapes = Access(level, F.allocLocal frame escapes)
+    fun allocLocal (level as Level {parent, name, frame, formals, unique}) escapes = Access(level, F.allocLocal frame escapes)
     | allocLocal Top _ = ErrorMsg.impossible "Can't alloc in top frame"
-    
-    fun seq [] = Nx(Tr.EXP (Tr.CONST 0))
-    | seq [stm1] = Nx(stm1)
-    | seq (stm :: stms) = Nx(Tr.SEQ (stm, unNx(seq stms)))
     
     
     fun opTree(A.PlusOp, left, right) = 
@@ -105,50 +103,20 @@ struct
         
         
         
-    | opTree(A.LtOp, left, right)=        
-        Cx(fn (t,f) => Tree.CJUMP(Tr.LT, unEx(left), unEx(right), t, f))
+    | opTree(A.LtOp, Ex(left), Ex(right))=
+    (
         
-        
-        
+        ErrorMsg.impossible "UNIMPLEMENTED"
+    )
     | opTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     
     
     fun assign(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun ifElse(test, then', else') = 
-        let
-            val r = Temp.newtemp()
-            val t = Temp.newlabel()
-            val f = Temp.newlabel()
-            val z = Temp.newlabel()
-        in
-            Ex(Tr.ESEQ
-            (
-                unNx(seq[unCx(test)(t,f),                    
-                    Tr.LABEL(t),                             
-                    Tr.MOVE(Tr.TEMP(r), unEx(then')),                               
-                    Tr.JUMP(Tr.NAME z, [z]),    
-                    Tr.LABEL(f),                             
-                    Tr.MOVE(Tr.TEMP(r), unEx(else')), 
-                    Tr.JUMP(Tr.NAME z, [z]),                        
-                    Tr.LABEL(z)]),
-                Tr.TEMP(r)
-            ))
-        end
-        
+    fun ifElse(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun ifThen(test, then') = 
-        let
-            val t = Temp.newlabel()
-            val f = Temp.newlabel()
-        in            
-            seq[unCx(test)(t,f),                    
-                Tr.LABEL(t),                             
-                unNx(then'),   
-                Tr.LABEL(f)]
-        end
-
+    fun ifThen(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun whileTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
@@ -170,14 +138,38 @@ struct
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    
-    
+    fun seq(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+   
+    fun islvlequal(Level{parent=_, name=_, formals=_, frame=_, unique=u1}, 
+			Level{parent=_, name=_, formals=_, frame=_, unique=u2}) = (u1=u2)
+	| islvlequal(_, _) = 
+		ErrorMsg.impossible "Should never occure, variables can not be declared in Top"
+
+
+    fun followstlink(deflevel, curlevel) = 
+	(
+	if(islvlequal(deflevel,curlevel))
+	then Tr.TEMP(F.FP)
+	else
+		case 	curlevel
+		of 	Level {parent, name, formals, frame, unique} => followstlink(deflevel,parent)
+		|	TOP => (ErrorMsg.impossible "following static link reached top level")
+	)	
+
+    fun simpleVar(Access(varlevel, access), uselevel) =
+		Ex( F.exp (access) (followstlink(varlevel,uselevel)) )
     
-    fun recordVar(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    (*fieldVar*)
+    fun recordVar(varExp, indexExp) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun arrayVar(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    (*subscriptVar*)
+    fun arrayVar(varExp, indexExp) = 
+	Ex(Tr.MEM(Tree.BINOP(Tr.PLUS, 
+				Tr.MEM(unEx(varExp)), 
+				Tr.BINOP(Tr.MUL,
+					unEx(indexExp),Tree.CONST(F.wordSize)))))
     
     
     
