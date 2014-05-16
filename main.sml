@@ -1,12 +1,15 @@
 structure Main = struct
+structure Tr = Translate
+structure F = Amd64Frame
 
-   structure Tr = Translate
-
- fun compile filename = 
-       let val absyn = Parse.parse filename
-           val frags = (Semant.transProg absyn)
+fun compile filename = 
+	let val absyn = Parse.parse filename
+		val frags = #exp (Semant.transProg absyn)
+		fun printProc (F.PROC{body = bod, frame = frm}) =
+			Printtree.printtree(TextIO.stdOut, bod)
+		|	printProc (F.STRING(lab, s)) =
+				TextIO.output(TextIO.stdOut, s)
         in 
-			PrintAbsyn.print(TextIO.stdOut , absyn)
+			app printProc frags
        end
-
 end

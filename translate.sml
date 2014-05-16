@@ -10,19 +10,20 @@ sig
     val formals: level -> access list
     val allocLocal: level-> bool -> access
     
-    val opTree: Absyn.oper * Tree.exp * Tree.exp -> exp
-    val assign: Tree.exp * Tree.exp -> Tree.exp
-    val ifElse: Tree.exp * Tree.stm * Tree.stm -> exp
-    val ifThen: Tree.exp * Tree.stm -> exp
-    val whileTree: Tree.exp * Tree.exp -> exp
+
+    val opTree: Absyn.oper * exp * exp -> exp
+    val assign: exp * exp -> exp
+    val ifElse: exp * exp * exp -> exp
+    val ifThen: exp * exp -> exp
+    val whileTree: exp * exp -> exp
     val breakJump: Temp.label -> exp
     val call: Temp.label * Types.ty list -> exp
-    val arrayConst: Tree.exp* Tree.exp -> exp
-    val recordConst: Tree.exp list * Symbol.symbol list  -> exp
-    val seq: Tree.exp list -> exp
+    val arrayConst: exp* exp -> exp
+    val recordConst: exp list * Symbol.symbol list  -> exp
+    val seq: exp list -> exp
     val var: Symbol.symbol -> exp
-    val recordVar: Symbol.symbol * Tree.exp -> exp
-    val arrayVar: Tree.exp * Tree.exp -> exp
+    val recordVar: Symbol.symbol * exp -> exp
+    val arrayVar: exp * exp -> exp
     
     
     val intConst: int -> exp
@@ -96,14 +97,15 @@ struct
     
     
     fun opTree(A.PlusOp, left, right) = 
-        Ex(Tr.BINOP(Tr.PLUS, left, right))
+        Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
         
         
         
-    | opTree(A.LtOp, left, right)=
+    | opTree(A.LtOp, Ex(left), Ex(right))=
     (
         
-        Tr.CJUMP(Tr.LT, left, right, 
+        ErrorMsg.impossible "UNIMPLEMENTED"
+    )
     | opTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     
@@ -123,7 +125,12 @@ struct
     fun intConst(integer) = 
         Ex(Tr.CONST(integer))
         
-    fun stringConst(str) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun stringConst(str) =
+		let
+			val strLab = T.newlabel()
+		in
+			Ex(Tr.NAME strLab)
+		end
         
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
