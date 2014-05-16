@@ -103,15 +103,26 @@ type frag = F.frag
     
     fun opTree(A.PlusOp, left, right) =
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
-        
-        
-        
+    | opTree(A.MinusOp, left, right) = 
+        Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
+    | opTree(A.TimesOp, left, right) = 
+        Ex(Tr.BINOP(Tr.MUL, unEx(left), unEx(right)))
+    | opTree(A.DivideOp, left, right) = 
+        Ex(Tr.BINOP(Tr.DIV, unEx(left), unEx(right)))
+    | opTree(A.EqOp, left, right) = 
+        Cx(fn (t,f) => Tree.CJUMP(Tr.EQ, unEx(left), unEx(right), t, f))
+    | opTree(A.NeqOp, left, right) = 
+        Cx(fn (t,f) => Tree.CJUMP(Tr.NE, unEx(left), unEx(right), t, f))
     | opTree(A.LtOp, left, right)=
-        Cx(fn (t,f) => Tree.CJUMP(Tr.LT, unEx(left), unEx(right), t, f))
+        Cx(fn (t,f) => Tree.CJUMP(Tr.LT, unEx(left), unEx(right), t, f))        
+    | opTree(A.GtOp, left, right) = 
+        Cx(fn (t,f) => Tree.CJUMP(Tr.GT, unEx(left), unEx(right), t, f))
+    | opTree(A.LeOp, left, right) = 
+        Cx(fn (t,f) => Tree.CJUMP(Tr.LE, unEx(left), unEx(right), t, f))
+    | opTree(A.GeOp, left, right) = 
+        Cx(fn (t,f) => Tree.CJUMP(Tr.GE, unEx(left), unEx(right), t, f))
         
-        
-        
-    | opTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+
     
     
     
