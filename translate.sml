@@ -10,23 +10,23 @@ sig
     val formals: level -> access list
     val allocLocal: level-> bool -> access
     
-    val opTree: Absyn.oper * Tree.exp * Tree.exp -> Tree.exp
-    val assign: Tree.exp * Tree.exp -> Tree.exp
-    val ifElse: Tree.exp * Tree.exp * Tree.exp -> Tree.exp
-    val ifThen: Tree.exp * Tree.exp -> Tree.exp
-    val whileTree: Tree.exp * Tree.exp -> Tree.exp
-    val breakJump: Temp.label -> Tree.exp
-    val call: Temp.label * Types.ty list -> Tree.exp
-    val arrayConst: Tree.exp* Tree.exp -> Tree.exp
-    val recordConst: Tree.exp list * Symbol.symbol list  -> Tree.exp
-    val seq: Tree.exp list -> Tree.exp
-    val var: Symbol.symbol -> Tree.exp
-    val recordVar: Symbol.symbol * Tree.exp -> Tree.exp
-    val arrayVar: Tree.exp * Tree.exp -> Tree.exp
+    val opTree: Absyn.oper * exp * exp -> exp
+    val assign: exp * exp -> exp
+    val ifElse: exp * exp * exp -> Tree.exp
+    val ifThen: exp * exp -> exp
+    val whileTree: exp * exp -> exp
+    val breakJump: Temp.label -> exp
+    val call: Temp.label * Types.ty list -> exp
+    val arrayConst: exp* exp -> exp
+    val recordConst: exp list * Symbol.symbol list  -> exp
+    val seq: exp list -> exp
+    val var: Symbol.symbol -> exp
+    val recordVar: Symbol.symbol * exp -> exp
+    val arrayVar: exp * exp -> exp
     
     
-    val intConst: int -> Tree.exp
-    val stringConst: string -> Tree.exp
+    val intConst: int -> exp
+    val stringConst: string -> exp
     
     
 end
@@ -114,9 +114,14 @@ struct
     fun call(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun intConst(integer) = 
-        Tr.CONST(integer)
+        Ex(Tr.CONST(integer))
         
-    fun stringConst(str) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun stringConst(str) =
+		let
+			val strLab = T.newlabel()
+		in
+			Ex(Tr.NAME strLab)
+		end
         
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
