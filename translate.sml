@@ -100,7 +100,6 @@ type frag = F.frag
     | seq [stm1] = Nx(stm1)
     | seq (stm :: stms) = Nx(Tr.SEQ (stm, unNx(seq stms)))
     
-    
     fun opTree(A.PlusOp, left, right) =
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
     | opTree(A.MinusOp, left, right) = 
@@ -168,12 +167,12 @@ type frag = F.frag
 			val testLab = T.newlabel()
 			val bodyLab = T.newlabel()
 		in
-			Nx(seq[Tr.LABEL(testLab),
+			seq[Tr.LABEL(testLab),
 					(unCx(test) (bodyLab, breakLab)),
 					Tr.LABEL(bodyLab),
 					(unNx(body)),
 					Tr.JUMP(Tr.NAME(testLab), [testLab]),
-					Tr.LABEL(breakLab)])
+					Tr.LABEL(breakLab)]
 		end
     
     fun breakJump(breakLab) =
@@ -194,8 +193,6 @@ type frag = F.frag
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
-    fun seq(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    
