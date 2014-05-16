@@ -10,23 +10,23 @@ sig
     val formals: level -> access list
     val allocLocal: level-> bool -> access
     
-    val opTree: Absyn.oper * Tree.exp * Tree.exp -> Tree.exp
+    val opTree: Absyn.oper * Tree.exp * Tree.exp -> exp
     val assign: Tree.exp * Tree.exp -> Tree.exp
-    val ifElse: Tree.exp * Tree.exp * Tree.exp -> Tree.exp
-    val ifThen: Tree.exp * Tree.exp -> Tree.exp
-    val whileTree: Tree.exp * Tree.exp -> Tree.exp
-    val breakJump: Temp.label -> Tree.exp
-    val call: Temp.label * Types.ty list -> Tree.exp
-    val arrayConst: Tree.exp* Tree.exp -> Tree.exp
-    val recordConst: Tree.exp list * Symbol.symbol list  -> Tree.exp
-    val seq: Tree.exp list -> Tree.exp
-    val var: Symbol.symbol -> Tree.exp
-    val recordVar: Symbol.symbol * Tree.exp -> Tree.exp
-    val arrayVar: Tree.exp * Tree.exp -> Tree.exp
+    val ifElse: Tree.exp * Tree.stm * Tree.stm -> exp
+    val ifThen: Tree.exp * Tree.stm -> exp
+    val whileTree: Tree.exp * Tree.exp -> exp
+    val breakJump: Temp.label -> exp
+    val call: Temp.label * Types.ty list -> exp
+    val arrayConst: Tree.exp* Tree.exp -> exp
+    val recordConst: Tree.exp list * Symbol.symbol list  -> exp
+    val seq: Tree.exp list -> exp
+    val var: Symbol.symbol -> exp
+    val recordVar: Symbol.symbol * Tree.exp -> exp
+    val arrayVar: Tree.exp * Tree.exp -> exp
     
     
-    val intConst: int -> Tree.exp
-    val stringConst: string -> Tree.exp
+    val intConst: int -> exp
+    val stringConst: string -> exp
     
     
 end
@@ -96,7 +96,14 @@ struct
     
     
     fun opTree(A.PlusOp, left, right) = 
-        Tr.BINOP(Tr.PLUS, left, right)
+        Ex(Tr.BINOP(Tr.PLUS, left, right))
+        
+        
+        
+    | opTree(A.LtOp, left, right)=
+    (
+        
+        Tr.CJUMP(Tr.LT, left, right, 
     | opTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     
@@ -114,7 +121,7 @@ struct
     fun call(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun intConst(integer) = 
-        Tr.CONST(integer)
+        Ex(Tr.CONST(integer))
         
     fun stringConst(str) = ErrorMsg.impossible "UNIMPLEMENTED"
         
