@@ -126,7 +126,8 @@ type frag = F.frag
     
     
     
-    fun assign(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun assign(lval, rexp) =
+		Nx(Tr.MOVE(unEx(lval), unEx(rexp)))
     
     fun ifElse(test, then', else') =
         let
@@ -162,9 +163,21 @@ type frag = F.frag
         end
 
     
-    fun whileTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun whileTree(test, body, breakLab) =
+		let
+			val testLab = T.newlabel()
+			val bodyLab = T.newlabel()
+		in
+			Nx(seq[Tr.LABEL(testLab),
+				unCx(test) (bodyLab, breakLab),
+				Tr.LABEL(bodyLab),
+				unNx(body),
+				Tr.JUMP(Tr.NAME(testLab), [testLab]),
+				Tr.LABEL(breakLab)])
+		end
     
-    fun breakJump(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun breakJump(breakLab) =
+		Nx(Tr.JUMP(Tr.NAME(breakLab), [breakLab]))
     
     fun call(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
@@ -181,8 +194,6 @@ type frag = F.frag
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
-    fun seq(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    

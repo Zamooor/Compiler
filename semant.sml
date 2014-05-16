@@ -18,6 +18,12 @@ struct
     type expty = {exp: Translate.exp, ty: Types.ty}
     
 	val currLevel = Tr.outermost
+	val nestingDepth = ref 0
+	val breakStack : Te.label list ref = ref []
+	val breakCount = ref 0
+
+	fun pushBreak(break, bStack) = bStack := break :: !bStack
+	fun popBreak(bStack) = bStack := tl(!bStack)
     
     fun checkInt ({exp, ty}, pos) = 
         case ty of Types.INT => ()
@@ -332,8 +338,14 @@ struct
                 | trexp (A.WhileExp{test, body, pos})=
                 (
                     let
+						val newBreak = Te.newlabel()
+						pushBreak(newBreak, breakStack)
+						nestingDepth := !nestingDepth + 1
                         val {exp=expTest, ty=tytest} = transExp(venv, tenv, test, currLevel)
                         val {exp=expBody, ty=tybody} = transExp(venv, tenv, body, currLevel)
+						nestingDepth := !nestingDepth - 1
+						popBreak(breakStack)
+						breakCount := 0
                     in
                     (
                         case tytest of T.INT => ()
@@ -343,19 +355,25 @@ struct
                         | _ => ErrorMsg.error pos "Body of loop must have no value"
                     );     
                     
-                    {exp=Tr.whileTree(expTest, expBody), ty=T.UNIT}                           
+                    {exp=Tr.whileTree(expTest, expBody, newBreak), ty=T.UNIT}                           
                     end  
                 ) 
                 
                 | trexp (A.ForExp{var,escape, lo, hi, body, pos})=
                 (
                     let
+						val newBreak = Te.newlabel()
+						pushBreak(newBreak, breakStack)
+						nestingDepth := !nestingDepth + 1
                         val {exp=expLo, ty=tylo} = transExp(venv, tenv, lo, currLevel)
                         val {exp=expHi, ty=tyhi} = transExp(venv, tenv, hi, currLevel)
                         
                         val access = Tr.allocLocal(currLevel)(!escape)
                         val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT})
                         val {exp=expBody, ty=tybody} = transExp(venv', tenv, body, currLevel)
+						nestingDepth = !nestingDepth - 1
+						popBreak(breakStack)
+						breakCount := 0
                     in
                     (
                         
@@ -377,7 +395,7 @@ struct
                 )  
                 
                 | trexp (A.BreakExp pos) = 
-                    {exp=Tr.breakJump(Temp.newlabel()) , ty = T.UNIT  }    
+					{exp=Tr.breakJump(hd breakStack) , ty = T.UNIT}
                 
                 (**** FUNCTION CALL ****)
                 
@@ -688,7 +706,8 @@ struct
 	end
 	and transProg(exp: A.exp) = 
 		let
-			 
+			val endLab = Te.namedlabel("end_of_file")
+			pushBreak(endLab, breakStack)
 			val currLevel = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
 			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp, currLevel);
 		in
