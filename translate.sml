@@ -20,7 +20,7 @@ sig
     val call: Temp.label * Types.ty list -> exp
     val arrayConst: exp* exp -> exp
     val recordConst: exp list * Symbol.symbol list  -> exp
-    val seq: exp list -> exp
+    val seq: Tree.stm list -> exp
     val var: Symbol.symbol -> exp
     val recordVar: Symbol.symbol * exp -> exp
     val arrayVar: exp * exp -> exp
@@ -51,7 +51,7 @@ struct
             val r = Temp.newtemp()
             val t = Temp.newlabel()
             val f = Temp.newlabel()
-        in
+        in            
             Tr.ESEQ(Tr.SEQ(Tr.MOVE(Tr.TEMP r, Tr.CONST 1),
                             Tr.SEQ(genstm(t,f),
                             Tr.SEQ(Tr.LABEL f,
@@ -95,26 +95,60 @@ struct
     fun allocLocal (level as Level {parent, name, frame, formals}) escapes = Access(level, F.allocLocal frame escapes)
     | allocLocal Top _ = ErrorMsg.impossible "Can't alloc in top frame"
     
+    fun seq [] = Nx(Tr.EXP (Tr.CONST 0))
+    | seq [stm1] = Nx(stm1)
+    | seq (stm :: stms) = Nx(Tr.SEQ (stm, unNx(seq stms)))
+    
     
     fun opTree(A.PlusOp, left, right) = 
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
         
         
         
-    | opTree(A.LtOp, Ex(left), Ex(right))=
-    (
+    | opTree(A.LtOp, left, right)=        
+        Cx(fn (t,f) => Tree.CJUMP(Tr.LT, unEx(left), unEx(right), t, f))
         
-        ErrorMsg.impossible "UNIMPLEMENTED"
-    )
+        
+        
     | opTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     
     
     fun assign(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun ifElse(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun ifElse(test, then', else') = 
+        let
+            val r = Temp.newtemp()
+            val t = Temp.newlabel()
+            val f = Temp.newlabel()
+            val z = Temp.newlabel()
+        in
+            Ex(Tr.ESEQ
+            (
+                unNx(seq[unCx(test)(t,f),                    
+                    Tr.LABEL(t),                             
+                    Tr.MOVE(Tr.TEMP(r), unEx(then')),                               
+                    Tr.JUMP(Tr.NAME z, [z]),    
+                    Tr.LABEL(f),                             
+                    Tr.MOVE(Tr.TEMP(r), unEx(else')), 
+                    Tr.JUMP(Tr.NAME z, [z]),                        
+                    Tr.LABEL(z)]),
+                Tr.TEMP(r)
+            ))
+        end
+        
     
-    fun ifThen(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun ifThen(test, then') = 
+        let
+            val t = Temp.newlabel()
+            val f = Temp.newlabel()
+        in            
+            seq[unCx(test)(t,f),                    
+                Tr.LABEL(t),                             
+                unNx(then'),   
+                Tr.LABEL(f)]
+        end
+
     
     fun whileTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
@@ -136,7 +170,8 @@ struct
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun seq(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    
+    
     
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
