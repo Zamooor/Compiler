@@ -1,6 +1,6 @@
 signature ENV = 
 sig
-    datatype enventry = VarEntry of {ty: Types.ty}
+    datatype enventry = VarEntry of {ty: Types.ty, access: Translate.access}
                     | FunEntry of {formals: Types.ty list, result: Types.ty, level: Translate.level, label: Temp.label}
                     
     val base_tenv : Types.ty Symbol.table
@@ -10,7 +10,7 @@ end
 structure Env : ENV =
 struct
 
-    datatype enventry = VarEntry of {ty: Types.ty}
+    datatype enventry = VarEntry of {ty: Types.ty, access: Translate.access}
                     | FunEntry of {formals: Types.ty list, result: Types.ty, level: Translate.level, label: Temp.label}
 
     structure S = Symbol
@@ -21,7 +21,6 @@ struct
     type venv = enventry S.table
     type tenv = Types.ty S.table 
     
-    type access = T.ty (* no idea what this is for yet *)
     
     val basetypes = [("string", Types.STRING), 
                     ("int", Types.INT)]
