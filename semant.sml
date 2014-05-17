@@ -278,7 +278,7 @@ struct
 	         		    else
 	         		        ErrorMsg.error pos "lvalue and rvalue in assign didn't match";
          		        
-         		        {exp=Tr.assign(rexp, lexp), ty=T.UNIT}
+         		        {exp=Tr.assign(lexp, rexp), ty=T.UNIT}
 	         		    
 				
 			        end
@@ -354,7 +354,7 @@ struct
                         val {exp=expHi, ty=tyhi} = transExp(venv, tenv, hi, currLevel)
                         
                         val access = Tr.allocLocal(currLevel)(!escape)
-                        val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT})
+                        val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT, access=access})
                         val {exp=expBody, ty=tybody} = transExp(venv', tenv, body, currLevel)
                     in
                     (
@@ -463,9 +463,10 @@ struct
     
 		        | trexp(A.LetExp{decs,body,pos}) = 
 			        let 
-				        val {venv=venv',tenv=tenv'} = transDec(venv,tenv,decs, currLevel)
+				        val {env={venv=venv',tenv=tenv'}, expList} = transDec(venv,tenv,decs, currLevel)
+				        val {exp=bexp, ty=bty} = transExp(venv',tenv',body, currLevel)
 			        in
-				        transExp(venv',tenv',body, currLevel)
+				        {exp= Tr.expseq(expList @ [bexp]), ty=bty}
 			        end
                 
                 (**** SEQ ****)
@@ -486,16 +487,14 @@ struct
                 and trvar (A.SimpleVar (id, pos)) =
 		        (
 			        case S.look(venv, id) of
-				        SOME(E.VarEntry{ty}) => {exp = Tr.var(id), ty = actual_ty (ty, pos)}
+				        SOME(E.VarEntry{ty, access}) => {exp = Tr.simpleVar(access, currLevel), ty = actual_ty (ty, pos)}
 			        |	NONE =>
 			        (
-				        ErrorMsg.error pos ("undefined variable " ^ S.name id);
-				        {exp = Tr.var(id), ty = T.UNIT}
+				        ErrorMsg.impossible ("undefined variable " ^ S.name id)
 			        )
 			        | _ =>
 			        (
-				        ErrorMsg.error pos ("Something broke while looking up a var entry");
-				        {exp = Tr.var(id), ty = T.UNIT}
+				        ErrorMsg.impossible ("Something broke while looking up a var entry")
 			        )
 		        )
 		        | trvar (A.FieldVar(v, id, pos)) =
@@ -552,17 +551,16 @@ struct
 
     and transDec (venv, tenv, decs, currLevel) = 
 	let
-	    fun
-		trdec (A.VarDec{name, escape,typ=NONE,init,pos}, venv', tenv') =
+	    fun trdec (A.VarDec{name, escape,typ=NONE,init,pos}, venv', tenv', expList) =
 		(
 			let 
-				val {exp,ty} = transExp (venv', tenv', init, currLevel)
+				val {exp=rexp,ty=rty} = transExp (venv', tenv', init, currLevel)
 				val access = Tr.allocLocal(currLevel)(!escape)
 	 		in 
-				{venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'}
+				{env = {venv = S.enter(venv', name, E.VarEntry{ty=rty, access=access}), tenv = tenv'}, expList = [Tr.assign(Tr.simpleVar(access, currLevel), rexp)] @ expList}
 			end
 		)
-		| trdec (A.VarDec{name, escape,typ=SOME typ,init,pos}, venv', tenv') =
+		| trdec (A.VarDec{name, escape,typ=SOME typ,init,pos}, venv', tenv', expList) =
 		(
 		    
 			let 
@@ -575,49 +573,46 @@ struct
 	            (
  		            case ty of T.RECORD(lfields,_)=>
  		                if rfields = lfields then
- 		                    ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
+ 		                    {env={venv = S.enter(venv', name, E.VarEntry{ty=ty, access=access}), tenv = tenv'}, expList = [Tr.assign(Tr.simpleVar(access, currLevel), exp)] @ expList}
                         else
                         (
-                            ErrorMsg.error pos "Record types don't match";
-                            {venv = venv', tenv = tenv'}
+                            ErrorMsg.impossible "Record types don't match"
                         )
                     |_ =>
                     (
-                        ErrorMsg.error pos("Can not ititalize a record as a "^T.toString(ty));
-                        {venv = venv', tenv = tenv'}
+                        ErrorMsg.impossible ("Can not ititalize a record as a "^T.toString(ty))
                     )
                 )
                 | _ => 
                 (
 	     		    if actty = ty then
-	     		        ({venv = S.enter(venv', name, E.VarEntry{ty=ty}), tenv = tenv'})
+	     		        {env={venv = S.enter(venv', name, E.VarEntry{ty=ty, access=access}), tenv = tenv'}, expList = [Tr.assign(Tr.simpleVar(access, currLevel), exp)] @ expList}
 	     		    else
 	     		    (
-	     		        ErrorMsg.error pos("Could not initialize a "^T.toString(actty)^" to be a "^T.toString(ty)^"\n");
-	     		        {venv = venv', tenv = tenv'}
+	     		        ErrorMsg.impossible ("Could not initialize a "^T.toString(actty)^" to be a "^T.toString(ty)^"\n")
      		        )
  		        )
 			)
 			end
 		)
-		|trdec(A.TypeDec tyDecList, venv', tenv') =
+		|trdec(A.TypeDec tyDecList, venv', tenv', expList) =
         (
             let
 
-                fun addType ({name, ty, pos}, venv'', tenv'') =
-                    {venv=venv'',tenv=S.enter(tenv'',name,transTy(tenv'',ty,ref ()))}
+                fun addType ({name, ty, pos}, venv'', tenv'', expList) =
+                    ({env={venv=venv'',tenv=S.enter(tenv'',name,transTy(tenv'',ty,ref ()))}, expList=expList})
 
-                and updateTypes (tdec, {venv = venv', tenv = tenv'}) = 
+                and updateTypes (tdec, {env={venv = venv', tenv = tenv'}, expList=expList}) = 
                 (
-                    addType (tdec, venv', tenv')
+                    addType (tdec, venv', tenv', expList)
                 )
 
             in
-                foldl updateTypes {venv = venv', tenv = tenv'} tyDecList
+                foldl updateTypes {env={venv = venv', tenv = tenv'}, expList = expList} tyDecList
             end
         )
 		
-		| trdec(A.FunctionDec funDecs, venv', tenv') =
+		| trdec(A.FunctionDec funDecs, venv', tenv', expList) =
 			let 				
 				fun transparam({name:S.symbol, escape:bool ref,typ:S.symbol,pos:A.pos}) =
 				    let
@@ -626,18 +621,17 @@ struct
 			        in
 					    case ty of T.UNIT =>
 					    (
-					        ErrorMsg.impossible ("type "^S.name(typ)^" is undefined");
-					        {name=name, ty = T.UNIT}
+					        ErrorMsg.impossible ("type "^S.name(typ)^" is undefined")
 				        )
-				        | _ => {name=name, ty=ty}
+				        | _ => {name=name, ty=ty, access=access}
 					    
 					end
 				    
-			    fun enterparam ({name,ty}, venv) = 
-			        S.enter(venv, name, E.VarEntry{ty=ty})
+			    fun enterparam ({name,ty,access}, venv) = 
+			        S.enter(venv, name, E.VarEntry{ty=ty, access=access})
 			        
 
-				fun transFun(fundec as {name, params, body, pos, result=SOME(rt,rpos)}, {venv, tenv}) =
+				fun transFun(fundec as {name, params, body, pos, result=SOME(rt,rpos)}, {env={venv, tenv}, expList}) =
 					let 
 					    val SOME(result_ty) = S.look(tenv, rt)
 					    val params' = map transparam params
@@ -648,14 +642,14 @@ struct
 					    val rtype = actual_ty(getOpt(S.look(tenv,  rt), T.UNIT), pos)
 					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body, currLevel)
 				    in
-				        transExp(venv'', tenv, body, currLevel);
 				        if rtype = btype then
 				            ()
 			            else
-			                ErrorMsg.error pos "the function does not return the value declared";
-				        {venv=venv', tenv=tenv}
+			                ErrorMsg.impossible "the function does not return the value declared";
+		                Tr.procEntryExit(currLevel, bexp);
+				        {env={venv=venv', tenv=tenv}, expList=expList}
 			        end
-		        | transFun(fundec as {name, params, body, pos, result=NONE}, {venv, tenv}) = 
+		        | transFun(fundec as {name, params, body, pos, result=NONE}, {env={venv, tenv}, expList}) = 
 		            let
 		                val params' = map transparam params
 		                val label = Te.newlabel()
@@ -665,26 +659,26 @@ struct
 					    val rtype = T.UNIT
 					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body, currLevel)
 				    in
-				        transExp(venv'', tenv, body, currLevel);
+				        Tr.procEntryExit(currLevel, bexp);
 				        if rtype = btype then
 				            ()
 			            else
-			                ErrorMsg.error pos "A procedure must return no value";
-				        {venv=venv', tenv=tenv}
+			                ErrorMsg.impossible "A procedure must return no value";
+				        {env={venv=venv', tenv=tenv}, expList=expList}
 			        end
 					
 					
 			in
-				foldl transFun {venv = venv', tenv = tenv'} funDecs
+				foldl transFun {env={venv = venv', tenv = tenv'}, expList=[]} funDecs
 			end
 		
 		
-		and updateScope (dec, {venv, tenv}) = (
-			(trdec (dec, venv, tenv))
+		and updateScope (dec, {env={venv, tenv}, expList}) = (
+			(trdec (dec, venv, tenv, expList))
 		)
 			
 	in
-		foldr updateScope {venv = venv, tenv = tenv} decs
+		foldr updateScope {env={venv = venv, tenv = tenv}, expList=[]} decs
 	end
 	and transProg(exp: A.exp) = 
 		let
@@ -692,7 +686,6 @@ struct
 			val currLevel = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
 			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp, currLevel);
 		in
-		    currLevel = Tr.newLevel({parent = currLevel, name = Temp.namedlabel("tiger_main"), formals = []} );
-			{exp = [], ty = ty} (* this is stupid but I think is has to do with defining procedures... *)
+			{exp = [], ty = ty} 
 		end
 end

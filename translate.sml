@@ -10,6 +10,8 @@ type frag
     val formals: level -> access list
     val allocLocal: level-> bool -> access
     
+    val procEntryExit : level * exp -> unit
+    val getResult : unit -> Amd64Frame.frag list
 
     val opTree: Absyn.oper * exp * exp -> exp
     val assign: exp * exp -> exp
@@ -21,7 +23,8 @@ type frag
     val arrayConst: exp* exp -> exp
     val recordConst: exp list * Symbol.symbol list -> exp
     val seq: Tree.stm list -> exp
-    val var: Symbol.symbol -> exp
+    val expseq: exp list -> exp
+    val simpleVar: access * level -> exp
     val recordVar: Symbol.symbol * exp -> exp
     val arrayVar: exp * exp -> exp
     
@@ -73,7 +76,9 @@ datatype exp = Ex of Tree.exp
     
 
 
-type frag = F.frag
+    type frag = F.frag
+    
+    val fragList = ref [] : Amd64Frame.frag list ref
     
     val outermost = Top
     
@@ -96,9 +101,26 @@ type frag = F.frag
     fun allocLocal (level as Level {parent, name, frame, formals, unique}) escapes = Access(level, F.allocLocal frame escapes)
     | allocLocal Top _ = ErrorMsg.impossible "Can't alloc in top frame"
     
+    
+    fun procEntryExit(Level {parent, name, frame, formals, unique}, body) =
+    (
+        fragList := !fragList @ [F.PROC{body=unNx(body), frame=frame}];
+        F.procEntryExit1(frame, Tr.SEQ(unNx(body), Tr.MOVE(Tr.TEMP(F.rax), unEx(body))));
+        ()
+    )
+    | procEntryExit(TOP, _) = 
+        ErrorMsg.impossible "NO! Can not Enter top level!"
+        
+    fun getResult() = 
+        !fragList
+    
     fun seq [] = Nx(Tr.EXP (Tr.CONST 0))
     | seq [stm1] = Nx(stm1)
     | seq (stm :: stms) = Nx(Tr.SEQ (stm, unNx(seq stms)))
+    
+    fun expseq [] = Nx(Tr.EXP (Tr.CONST 0))
+    | expseq [stm1] = stm1
+    | expseq (stm :: stms) = Nx(Tr.SEQ (unNx(stm), unNx(expseq stms)))
     
     
     fun opTree(A.PlusOp, left, right) =
@@ -126,8 +148,9 @@ type frag = F.frag
     
     
     
-    fun assign(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
+    fun assign(lval, rexp) =
+        Nx(Tr.MOVE(unEx(lval), unEx(rexp)))
+        
     fun ifElse(test, then', else') =
         let
             val r = Temp.newtemp()
@@ -182,7 +205,7 @@ type frag = F.frag
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
-    fun seq(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    
     
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    
