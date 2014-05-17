@@ -216,8 +216,6 @@ datatype exp = Ex of Tree.exp
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-
-    fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    
     fun islvlequal(Level{parent=_, name=_, formals=_, frame=_, unique=u1}, 
 			Level{parent=_, name=_, formals=_, frame=_, unique=u2}) = (u1=u2)
