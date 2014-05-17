@@ -526,21 +526,33 @@ struct
 			        )
 			        | _ =>
 			        (
+
+
 				        ErrorMsg.impossible ("Something broke while looking up a var entry")
+
 			        )
 		        )
 		        | trvar (A.FieldVar(v, id, pos)) =
 		        (
 		            let
 		                val {exp, ty} = trvar(v)
+
+				val inde = 0
+
+				fun getIndex((name,ty)::tail,index) =
+						            if (id = name) then index else getIndex(tail,index+1)
+
+				|getIndex(nil,index) = ErrorMsg.impossible ("Field " ^ S.name(id) ^ " does not exist")
+
 		                fun findField((field, typ), NONE) =
 						            (if id = field then SOME(typ) else NONE)
 					            |	findField(_, fMatch as SOME(typ)) = fMatch
 	                in
 			            case ty of T.RECORD(fields, _)  =>
 		                (
+					    inde = getIndex(fields,0);
 				            case (foldl findField NONE fields) of
-						            SOME(typ) => {exp = Tr.recordVar(id, exp), ty = typ}
+						            SOME(typ) => {exp = Tr.recordVar(exp, Tr.intConst(inde)), ty = typ}
 				            |	NONE => 
 				            (
 					            ErrorMsg.impossible ("Field " ^ S.name(id) ^ " does not exist")
