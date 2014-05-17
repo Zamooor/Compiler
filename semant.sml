@@ -359,10 +359,30 @@ struct
 
                         val venv' = S.enter(venv, var, E.VarEntry{ty=T.INT, access=access})
                         val {exp=expBody, ty=tybody} = transExp(venv', tenv, body, currLevel, newBreakLab)
+
+						val i = A.VarDec{name = var, 
+										escape = ref true,
+										typ = SOME (Symbol.symbol("int"), pos),
+										init = lo,
+										pos = pos}
+						val iniCond = A.OpExp{left = A.VarExp(A.SimpleVar(var, pos)),
+												oper = A.LeOp,
+												right = hi,
+												pos = pos} 
+						val exitCheck = A.IfExp{test = A.OpExp{left = A.VarExp(A.SimpleVar(var, pos)),
+																oper = A.LtOp,
+																right = hi,
+																pos = pos},
+												then' = A.AssignExp{var = A.SimpleVar(var, pos),
+																	exp = A.OpExp{left = A.VarExp(A.SimpleVar(var, pos)),
+																					oper = A.PlusOp,
+																					right = A.IntExp(1),
+																					pos = pos},
+																	pos = pos},
+												else' = SOME(A.BreakExp pos),
+												pos = pos}
                     in
                     (
-                        
-                        
                         case tylo of T.INT => ()
                         | _ => ErrorMsg.error pos "lower bound of loop must be an integer";
                         
@@ -373,9 +393,12 @@ struct
                         | _ => ErrorMsg.error pos "Body of loop must have no value"
                     );
                     (* first attempt please help *)
-                    (*{exp=transExp(venv, tenv, A.LetExp({[A.VarDec{var, True, SOME tylo, lo, pos}, A.VarDec{S.symbol('limit'), True, SOME tyhi, hi, pos}], A.WhileExp{A.OpExp{lo, A.LeOp, hi}, A.SeqExp([(body, pos), (IfExp({A.OpExp{ , ty=T.UNIT}   *)
-                    
-                    {exp=(#exp (transExp(venv, tenv, A.OpExp{left=lo, oper=A.PlusOp, right=hi, pos = pos}, currLevel, newBreakLab))), ty = T.UNIT}
+                    transExp(venv, tenv, A.LetExp{decs = [i],
+													body = A.WhileExp{test = iniCond,
+																		body = A.SeqExp([(body, pos), (exitCheck, pos)]),
+																		pos = pos},
+													pos = pos}, currLevel, breakLab)
+                    (*{exp=(#exp (transExp(venv, tenv, A.Let{left=lo, oper=A.PlusOp, right=hi, pos = pos}, currLevel, newBreakLab))), ty = T.UNIT}*)
 					end
                 )  
                 
