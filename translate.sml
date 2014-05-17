@@ -23,7 +23,7 @@ sig
     val seq: exp list -> exp
     val var: Symbol.symbol -> exp
     val simpleVar: access * level -> exp
-    val recordVar: Symbol.symbol * exp -> exp
+    val recordVar: exp * exp -> exp
     val arrayVar: exp * exp -> exp
     
     
@@ -162,11 +162,33 @@ struct
 		Ex( F.exp (access) (followstlink(varlevel,uselevel)) )
     
     (*fieldVar*)
-    fun recordVar(varExp, indexExp) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun recordVar(varExp, indexExp) = 
+	let 
+		val tempvar = T.newtemp()
+		val label1 = T.newlabel()
+		val NIL:exp  = Ex(Tr.CONST(0))
+		val ERROR:T.label = T.newlabel()
+	in
+		Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE(Tr.TEMP(tempvar),unEx(varExp)
+					 ),
+					Tr.SEQ(Tr.CJUMP(Tr.NE, unEx(NIL), Tr.TEMP(tempvar), label1, ERROR),
+						Tr.LABEL(label1)
+					      )
+				 ), 
+			Tr.MEM (Tr.BINOP(Tr.PLUS, 
+					 unEx(varExp), 
+					 Tr.BINOP(Tr.MUL,
+						  Tr.MEM(unEx(indexExp)),Tr.CONST(F.wordSize)
+						 )
+					)
+				)
+			)
+		  )	   
+	end
     
     (*subscriptVar*)
     fun arrayVar(varExp, indexExp) = 
-	Ex(Tr.MEM(Tree.BINOP(Tr.PLUS, 
+	Ex(Tr.MEM(Tr.BINOP(Tr.PLUS, 
 				Tr.MEM(unEx(varExp)), 
 				Tr.BINOP(Tr.MUL,
 					unEx(indexExp),Tree.CONST(F.wordSize)))))
