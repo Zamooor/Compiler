@@ -17,7 +17,7 @@ type frag
     val assign: exp * exp -> exp
     val ifElse: exp * exp * exp -> exp
     val ifThen: exp * exp -> exp
-    val whileTree: exp * exp -> exp
+    val whileTree: exp * exp * Temp.label -> exp
     val breakJump: Temp.label -> exp
     val call: Temp.label * Types.ty list -> exp
     val arrayConst: exp* exp -> exp
@@ -118,11 +118,11 @@ datatype exp = Ex of Tree.exp
     | seq [stm1] = Nx(stm1)
     | seq (stm :: stms) = Nx(Tr.SEQ (stm, unNx(seq stms)))
     
+
     fun expseq [] = Nx(Tr.EXP (Tr.CONST 0))
     | expseq [stm1] = stm1
     | expseq (stm :: stms) = Nx(Tr.SEQ (unNx(stm), unNx(expseq stms)))
-    
-    
+
     fun opTree(A.PlusOp, left, right) =
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
     | opTree(A.MinusOp, left, right) = 
@@ -150,7 +150,7 @@ datatype exp = Ex of Tree.exp
     
     fun assign(lval, rexp) =
         Nx(Tr.MOVE(unEx(lval), unEx(rexp)))
-        
+
     fun ifElse(test, then', else') =
         let
             val r = Temp.newtemp()
@@ -185,9 +185,21 @@ datatype exp = Ex of Tree.exp
         end
 
     
-    fun whileTree(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun whileTree(test, body, breakLab) =
+		let
+			val testLab = T.newlabel()
+			val bodyLab = T.newlabel()
+		in
+			seq[Tr.LABEL(testLab),
+					(unCx(test) (bodyLab, breakLab)),
+					Tr.LABEL(bodyLab),
+					(unNx(body)),
+					Tr.JUMP(Tr.NAME(testLab), [testLab]),
+					Tr.LABEL(breakLab)]
+		end
     
-    fun breakJump(_) = ErrorMsg.impossible "UNIMPLEMENTED"
+    fun breakJump(breakLab) =
+		Nx(Tr.JUMP(Tr.NAME(breakLab), [breakLab]))
     
     fun call(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
@@ -204,9 +216,7 @@ datatype exp = Ex of Tree.exp
     fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
     
     fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
-    
-    
+
     fun var(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    
     fun islvlequal(Level{parent=_, name=_, formals=_, frame=_, unique=u1}, 
