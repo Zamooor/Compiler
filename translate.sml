@@ -19,7 +19,7 @@ type frag
     val ifThen: exp * exp -> exp
     val whileTree: exp * exp * Temp.label -> exp
     val breakJump: Temp.label -> exp
-    val call: Temp.label * Types.ty list -> exp
+    val call: Temp.label * exp list * level -> exp
     val arrayConst: exp* exp -> exp
     val recordConst: exp list * Symbol.symbol list -> exp
     val seq: Tree.stm list -> exp
@@ -201,8 +201,14 @@ datatype exp = Ex of Tree.exp
     fun breakJump(breakLab) =
 		Nx(Tr.JUMP(Tr.NAME(breakLab), [breakLab]))
     
-    fun call(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
+	(* WE STILL NEED TO PUT THE STATIC LINK HERE I CAN'T FIGURE IT OUT *)
+    fun call(funcLab, formals, lev) =
+		let
+			val args = map unEx formals
+		in
+			Ex(Tr.CALL(Tr.NAME(funcLab), args))
+		end
+
     fun intConst(integer) = 
         Ex(Tr.CONST(integer))
         

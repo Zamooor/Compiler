@@ -419,6 +419,7 @@ struct
                     (
                         let 
                             val argtypes = map #ty (map (fn x => transExp(venv, tenv, x, currLevel, breakLab)) args)
+							val argExps = map #exp (map (fn x => transExp(venv, tenv, x, currLevel, breakLab)) args)
                         in   
                         (
                             if argtypes = formals then
@@ -426,7 +427,7 @@ struct
                             else
                                 ErrorMsg.error pos ("function call doesn't match the signature of "^S.name(func));
                             (* maybe have to add extra formal for static link? *)
-                            {exp = Tr.call(label, formals), ty = result}
+                            {exp = Tr.call(label, argExps, level), ty = result}
                         )
                         end
                     )
