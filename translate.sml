@@ -19,9 +19,9 @@ type frag
     val ifThen: exp * exp -> exp
     val whileTree: exp * exp * Temp.label -> exp
     val breakJump: Temp.label -> exp
-    val call: Temp.label * exp list * level -> exp
+    val call: Temp.label * exp list * level * level -> exp
     val arrayConst: exp* exp -> exp
-    val recordConst: exp list * Symbol.symbol list -> exp
+    val recordConst: exp list * int -> exp
     val seq: Tree.stm list -> exp
     val expseq: exp list -> exp
     val simpleVar: access * level -> exp
@@ -201,13 +201,7 @@ datatype exp = Ex of Tree.exp
     fun breakJump(breakLab) =
 		Nx(Tr.JUMP(Tr.NAME(breakLab), [breakLab]))
     
-	(* WE STILL NEED TO PUT THE STATIC LINK HERE I CAN'T FIGURE IT OUT *)
-    fun call(funcLab, formals, lev) =
-		let
-			val args = map unEx formals
-		in
-			Ex(Tr.CALL(Tr.NAME(funcLab), args))
-		end
+
 
     fun intConst(integer) = 
         Ex(Tr.CONST(integer))
@@ -219,9 +213,6 @@ datatype exp = Ex of Tree.exp
 			Ex(Tr.NAME strLab)
 		end
         
-    fun arrayConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
-    
-    fun recordConst(_) = ErrorMsg.impossible "UNIMPLEMENTED"
    
     fun islvlequal(Level{parent=_, name=_, formals=_, frame=_, unique=u1}, 
 			Level{parent=_, name=_, formals=_, frame=_, unique=u2}) = (u1=u2)
@@ -236,8 +227,23 @@ datatype exp = Ex of Tree.exp
 	else
 		case 	curlevel
 		of 	Level {parent, name, formals, frame, unique} => followstlink(deflevel,parent)
-		|	TOP => (ErrorMsg.impossible "following static link reached top level")
+		|	Top => (ErrorMsg.impossible "following static link reached top level")
 	)	
+
+    fun call(funcLab, formals, funlevel, curlevel) =
+	let
+			val args = map unEx formals
+
+	in
+		case funlevel
+			of Top => Ex(Tr.CALL(Tr.NAME(funcLab), args))
+			  |Level {parent, name, formals, frame, unique} =>
+				let 
+					val args' = followstlink(curlevel,parent)::args
+				in
+					Ex(Tr.CALL(Tr.NAME(funcLab), args'))
+				end
+    	end
 
     fun simpleVar(Access(varlevel, access), uselevel) =
 		Ex( F.exp (access) (followstlink(varlevel,uselevel)) )
@@ -274,7 +280,43 @@ datatype exp = Ex of Tree.exp
 				Tr.BINOP(Tr.MUL,
 					unEx(indexExp),Tree.CONST(F.wordSize)))))
     
-    
+     fun arrayConst(initExp,sizeExp) = 
+		let 
+			val arraytemp = Tr.TEMP(T.newtemp())
+		in
+			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE(arraytemp, F.externalCall("malloc", [Tr.BINOP(Tr.MUL, unEx(sizeExp), Tr.CONST(F.wordSize))])
+						 ),
+					   Tr.EXP (F.externalCall("initArray", [unEx(sizeExp), unEx(initExp)])
+						  )
+					),
+				   arraytemp
+				  )
+			  )
+		end
+    fun initField(fieldexp::tail, index) =
+	let 
+		
+		val alloc = recordVar(fieldexp,intConst(index))
+	in
+		Tr.SEQ(Tr.MOVE(unEx(alloc), unEx(fieldexp)),
+			initField(tail, index+1))
+	end
+	| initField(nil, index) = Tr.EXP (Tr.CONST 0)
+
+    fun recordConst(fieldExps,count) = 
+		let
+			val recordtemp = Tr.TEMP(T.newtemp())
+			val idx = 0
+
+		in
+			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE (recordtemp, F.externalCall("malloc", [Tr.CONST(count * F.wordSize)])
+					         ),
+				 	  initField(fieldExps, 0)
+					 ),
+				   recordtemp
+				  )
+			  )
+		end   
     
     
         
