@@ -1,7 +1,7 @@
 structure Semant :
 sig
     
-    val transProg: Absyn.exp -> {exp : Translate.frag list, ty: Types.ty}
+    val transProg: Absyn.exp -> {frags: Translate.frag list, ty: Types.ty}
     
 end
 = 
@@ -730,6 +730,7 @@ struct
 			val currLevel = Tr.newLevel({parent = Tr.outermost, name = Temp.namedlabel("tiger_main"), formals = []} )
 			val {exp, ty} = transExp(Env.base_venv, Env.base_tenv, exp, currLevel, NONE);
 		in
-			{exp = [], ty = ty} 
+			Tr.procEntryExit(currLevel, exp);
+			{frags = Tr.getResult(), ty = ty} 
 		end
 end
