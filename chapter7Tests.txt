@@ -1,0 +1,29 @@
+Tested Files:
+    test4.tig
+    test8.tig
+    test12.tig ****** there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
+
+UntestedFiles:
+    test1 - test3
+
+Can't test Files:
+    test5.tig (we don't handle recursive types)
+    test6.tig (we don't handle recursive functions)
+    test7.tig (^^^)
+    9 -11 (Error test)
+
+
+Chapter 7, things that I understand and so I know they work:
+
+1. if statements
+
+
+Things I don't understand and so don't know if they work:
+
+1. function call, static links (I think I believe it now)
+
+
+
+    
+    
+

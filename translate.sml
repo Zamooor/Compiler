@@ -126,7 +126,7 @@ datatype exp = Ex of Tree.exp
     fun opTree(A.PlusOp, left, right) =
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
     | opTree(A.MinusOp, left, right) = 
-        Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))
+        Ex(Tr.BINOP(Tr.MINUS, unEx(left), unEx(right)))
     | opTree(A.TimesOp, left, right) = 
         Ex(Tr.BINOP(Tr.MUL, unEx(left), unEx(right)))
     | opTree(A.DivideOp, left, right) = 
@@ -166,7 +166,6 @@ datatype exp = Ex of Tree.exp
                     Tr.JUMP(Tr.NAME z, [z]),
                     Tr.LABEL(f),
                     Tr.MOVE(Tr.TEMP(r), unEx(else')),
-                    Tr.JUMP(Tr.NAME z, [z]),
                     Tr.LABEL(z)]),
                 Tr.TEMP(r)
             ))
