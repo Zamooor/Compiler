@@ -459,17 +459,17 @@ struct
 						SOME (realAryType as T.ARRAY (ty, _)) =>
 						(
 							actual_ty (ty, pos);
-							{exp = Tr.arrayConst(expSize, expInit), ty = realAryType}
+							{exp = Tr.arrayConst(expInit, expSize), ty = realAryType}
 						)
 					|	NONE =>
 						(
 							ErrorMsg.error pos ("Type is not defined: " ^ S.name typ);
-							{exp = Tr.arrayConst(expSize, expInit), ty = T.UNIT}
+							{exp = Tr.arrayConst(expInit, expSize), ty = T.UNIT}
 						)
 					|	_ =>
 						(
 							ErrorMsg.error pos "Type is not of array type";
-							{exp = Tr.arrayConst(expSize, expInit), ty = T.UNIT}
+							{exp = Tr.arrayConst(expInit, expSize), ty = T.UNIT}
 						)
 				)
 				end
@@ -573,7 +573,7 @@ struct
 		            in
 			            checkInt ((trexp ex), pos);
 			            case trvar v of
-				            {exp = varExp, ty = T.ARRAY(typ, _)} => {exp = Tr.arrayVar(indExp, varExp), ty = typ}
+				            {exp = varExp, ty = T.ARRAY(typ, _)} => {exp = Tr.arrayVar(varExp, indExp), ty = typ}
 			            |	{exp, ty} =>
 			            (
 				            ErrorMsg.impossible "Variable is not an array"

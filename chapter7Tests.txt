@@ -1,4 +1,6 @@
 Tested Files:
+	test1.tig ****** arrayVar and arrayConst were taking their parameters swapped.
+					arrayVar doesn't seem to be outputting what it should be
     test4.tig
     test8.tig
     test12.tig ****** there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
@@ -16,7 +18,6 @@ Can't test Files:
 Chapter 7, things that I understand and so I know they work:
 
 1. if statements
-
 
 Things I don't understand and so don't know if they work:
 
