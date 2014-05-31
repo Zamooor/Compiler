@@ -1,6 +1,6 @@
 Tested Files:
-	test1.tig ****** arrayVar and arrayConst were taking their parameters swapped.
-					arrayVar doesn't seem to be outputting what it should be
+	test1.tig ****** There might still be an error with allocLocal, not sure it's ever
+						giving an offset other than 0
     test4.tig
     test8.tig
     test12.tig ****** there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
