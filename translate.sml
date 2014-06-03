@@ -244,9 +244,9 @@ datatype exp = Ex of Tree.exp
 				end
     	end
 
-    fun simpleVar(Access(varlevel, access), uselevel) =
+    fun simpleVar(Access(varlevel, access), uselevel) = 
 		Ex( F.exp (access) (followstlink(varlevel,uselevel)) )
-    
+
     (*fieldVar*)
     fun recordVar(varExp, indexExp) = 
 	let 
@@ -278,8 +278,9 @@ datatype exp = Ex of Tree.exp
 				Tr.MEM(unEx(varExp)), 
 				Tr.BINOP(Tr.MUL,
 					unEx(indexExp),Tree.CONST(F.wordSize)))))
-    
-     fun arrayConst(initExp,sizeExp) = 
+
+ (*  
+     fun arrayConst(sizeExp,initExp) = 
 		let 
 			val arraytemp = Tr.TEMP(T.newtemp())
 		in
@@ -292,6 +293,9 @@ datatype exp = Ex of Tree.exp
 				  )
 			  )
 		end
+ *)
+   fun arrayConst(sizeExp,initExp) = Ex(F.externalCall("initArray", [unEx(sizeExp), unEx(initExp)]))
+
     fun initField(fieldexp::tail, index) =
 	let 
 		
