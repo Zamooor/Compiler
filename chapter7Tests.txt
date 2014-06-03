@@ -1,11 +1,26 @@
+
+
 Tested Files:
-	test1.tig ****** There might still be an error with allocLocal, not sure it's ever
-						giving an offset other than 0
-	            **** Fixed initializing the array var! We think that the output provided is wrong
-	test2.tig ***** Essentially the same as test1
+	test1.tig   // There might still be an error with allocLocal, not sure it's ever
+				    giving an offset other than 0
+                // Fixed initializing the array var! We think that the output provided is wrong
+	test2.tig   // Essentially the same as test1
+	            // Fixed some details regarding list of expressions, it is now more similar to the provided output
     test4.tig
     test8.tig
-    test12.tig ****** FIXED! (Either I was blind before, or it magically works this time...) there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
+    test12.tig  // FIXED! (Either I was blind before, or it magically works this time...) 
+                // There is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
+    test27.tig  // Mostly good, but I think there are some details regarding function calls that may be wrong.  
+                // It would have to be clarified with Meehan
+    test30.tig  // Array indexing looks great
+    test37.tig  // There seems to be extra nested ESEQ, but they should be cleared up in the cononicalizing step
+    test41.tig
+    42          // FIXED Need to fix allocRecord
+    44          // we don't handle nil records, oops
+    46          // again, nils
+    47
+    48
+    
 
 UntestedFiles:
     test3
@@ -14,8 +29,12 @@ Can't test Files:
     test5.tig (we don't handle recursive types)
     test6.tig (we don't handle recursive functions)
     test7.tig (^^^)
-    9 -11 (Error test)
-
+    9 -11 (Error tests)
+    13-26 (^^^)
+    28-29 (^^^)
+    31-36 (^^^)
+    38-40 (^^^)
+    
 
 Chapter 7, things that I understand and so I know they work:
 
