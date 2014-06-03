@@ -15,7 +15,7 @@ Tested Files:
     test30.tig  // Array indexing looks great
     test37.tig  // There seems to be extra nested ESEQ, but they should be cleared up in the cononicalizing step
     test41.tig
-    42          // Need to fix allocRecord
+    42          // FIXED Need to fix allocRecord
     44          // we don't handle nil records, oops
     46          // again, nils
     47
