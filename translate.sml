@@ -312,7 +312,7 @@ datatype exp = Ex of Tree.exp
 			val idx = 0
 
 		in
-			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE (recordtemp, F.externalCall("malloc", [Tr.CONST(count * F.wordSize)])
+			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE (recordtemp, F.externalCall("allocRecord", [Tr.CONST(count * F.wordSize)])
 					         ),
 				 	  initField(fieldExps, 0)
 					 ),
