@@ -1,10 +1,11 @@
 Tested Files:
 	test1.tig ****** There might still be an error with allocLocal, not sure it's ever
 						giving an offset other than 0
+	            **** Fixed initializing the array var! We think that the output provided is wrong
 	test2.tig ***** Essentially the same as test1
     test4.tig
     test8.tig
-    test12.tig ****** there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
+    test12.tig ****** FIXED! (Either I was blind before, or it magically works this time...) there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
 
 UntestedFiles:
     test3

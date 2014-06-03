@@ -121,7 +121,7 @@ datatype exp = Ex of Tree.exp
 
     fun expseq [] = Nx(Tr.EXP (Tr.CONST 0))
     | expseq [stm1] = stm1
-    | expseq (stm :: stms) = Nx(Tr.SEQ (unNx(stm), unNx(expseq stms)))
+    | expseq (stm :: stms) = Nx(Tr.EXP(Tr.ESEQ (unNx(stm), unEx(expseq stms))))
 
     fun opTree(A.PlusOp, left, right) =
         Ex(Tr.BINOP(Tr.PLUS, unEx(left), unEx(right)))

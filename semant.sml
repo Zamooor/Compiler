@@ -715,7 +715,7 @@ struct
 					
 					
 			in
-				foldl transFun {env={venv = venv', tenv = tenv'}, expList=[]} funDecs
+				foldl transFun {env={venv = venv', tenv = tenv'}, expList=expList} funDecs
 			end
 		
 		
