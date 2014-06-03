@@ -1,10 +1,13 @@
 Tested Files:
+	test1.tig ****** There might still be an error with allocLocal, not sure it's ever
+						giving an offset other than 0
+	test2.tig ***** Essentially the same as test1
     test4.tig
     test8.tig
     test12.tig ****** there is an error in trexp (A.SeqExp expList) that causes loss of the a:=a+1 statement
 
 UntestedFiles:
-    test1 - test3
+    test3
 
 Can't test Files:
     test5.tig (we don't handle recursive types)
@@ -16,7 +19,6 @@ Can't test Files:
 Chapter 7, things that I understand and so I know they work:
 
 1. if statements
-
 
 Things I don't understand and so don't know if they work:
 
