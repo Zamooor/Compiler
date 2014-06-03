@@ -249,28 +249,15 @@ datatype exp = Ex of Tree.exp
 
     (*fieldVar*)
     fun recordVar(varExp, indexExp) = 
-	let 
-		val tempvar = T.newtemp()
-		val label1 = T.newlabel()
-		val NIL:exp  = Ex(Tr.CONST(0))
-		val ERROR:T.label = T.newlabel()
-	in
-		Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE(Tr.TEMP(tempvar),unEx(varExp)
-					 ),
-					Tr.SEQ(Tr.CJUMP(Tr.NE, unEx(NIL), Tr.TEMP(tempvar), label1, ERROR),
-						Tr.LABEL(label1)
-					      )
-				 ), 
-			Tr.MEM (Tr.BINOP(Tr.PLUS, 
+		Ex(Tr.MEM (Tr.BINOP(Tr.PLUS, 
 					 unEx(varExp), 
 					 Tr.BINOP(Tr.MUL,
 						  Tr.MEM(unEx(indexExp)),Tr.CONST(F.wordSize)
 						 )
-					)
-				)
-			)
+				   )
+			 )
 		  )	   
-	end
+
     
     (*subscriptVar*)
     fun arrayVar(varExp, indexExp) = 
