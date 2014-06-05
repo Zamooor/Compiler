@@ -1,10 +1,7 @@
 Group is 
 
 main.sml
-codegen.sig
-x64Gen.sml
 assem.sml
-canon.sml
 env.sml
 amd64frame.sml
 frame.sig

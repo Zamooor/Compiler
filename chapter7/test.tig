@@ -1,0 +1,6 @@
+let
+	var x : int := 5
+	function foo(a:int) : int = a
+in
+	x
+end

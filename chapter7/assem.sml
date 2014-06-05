@@ -5,13 +5,13 @@ structure Assem = struct
   type label = Temp.label
 
   datatype instr = OPER of {assem: string,
-			                dst: temp list,
-			                src: temp list,
-			                jump: label list option}
+			    dst: temp list,
+			    src: temp list,
+			    jump: label list option}
                  | LABEL of {assem: string, lab: Temp.label}
                  | MOVE of {assem: string, 
-			                dst: temp,
-			                src: temp}
+			    dst: temp,
+			    src: temp}
 
   fun format saytemp =
     let 

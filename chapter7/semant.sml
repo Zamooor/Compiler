@@ -392,12 +392,13 @@ struct
                         case tybody of T.UNIT => ()
                         | _ => ErrorMsg.error pos "Body of loop must have no value"
                     );
+                    (* first attempt please help *)
                     transExp(venv, tenv, A.LetExp{decs = [i],
 													body = A.WhileExp{test = iniCond,
 																		body = A.SeqExp([(body, pos), (exitCheck, pos)]),
 																		pos = pos},
 													pos = pos}, currLevel, breakLab)
-
+                    (*{exp=(#exp (transExp(venv, tenv, A.Let{left=lo, oper=A.PlusOp, right=hi, pos = pos}, currLevel, newBreakLab))), ty = T.UNIT}*)
 					end
                 )  
                 
