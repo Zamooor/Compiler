@@ -1,0 +1,7 @@
+let
+    var a := 1
+    
+    function f(i:int) :int = i
+in
+    a := f(2)
+end

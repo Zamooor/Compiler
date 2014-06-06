@@ -426,8 +426,9 @@ struct
                                 ()
                             else
                                 ErrorMsg.error pos ("function call doesn't match the signature of "^S.name(func));
-                            (* maybe have to add extra formal for static link? *)
-                            {exp = Tr.call(label, argtree, level, currLevel ), ty = result}
+                            (*case result of T.UNIT =>*)
+                                {exp = Tr.call(label, argtree, level, currLevel ), ty = result}
+                            (*| _ => {exp = Tr.callFun(label, argtree, level, currLevel) , ty = result}*)
                         )
                         end
                     )
@@ -686,16 +687,17 @@ struct
 					    val params' = map transparam params
 					    val label = Te.newlabel()
 					    val formals = map ! (map #escape params)
-					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = result_ty, level = Tr.newLevel({parent=currLevel, name=label, formals=formals}),  label=label})
+					    val newLevel = Tr.newLevel({parent=currLevel, name=name, formals=formals})
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = result_ty, level = newLevel,  label=label})
 					    val venv'' = foldl enterparam venv' params' 
 					    val rtype = actual_ty(getOpt(S.look(tenv,  rt), T.UNIT), pos)
-					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body, currLevel, breakLab)
+					    val {exp=bexp, ty = btype} = transExp(venv'', tenv, body, newLevel, breakLab)
 				    in
 				        if rtype = btype then
 				            ()
 			            else
 			                ErrorMsg.impossible "the function does not return the value declared";
-		                Tr.procEntryExit(currLevel, bexp);
+		                Tr.procEntryExit(newLevel, bexp);
 				        {env={venv=venv', tenv=tenv}, expList=expList}
 			        end
 		        | transFun(fundec as {name, params, body, pos, result=NONE}, {env={venv, tenv}, expList}) = 
@@ -703,16 +705,18 @@ struct
 		                val params' = map transparam params
 		                val label = Te.newlabel()
 		                val formals = map ! (map #escape params)
-					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = T.UNIT, level = Tr.newLevel({parent=currLevel, name=label, formals=formals}),  label=label})
+	                    val newLevel = Tr.newLevel({parent = currLevel, name = name, formals = formals} )
+					    val venv' = S.enter(venv, name, E.FunEntry{formals = map #ty params', result = T.UNIT, level = newLevel,  label=label})
 					    val venv'' = foldl enterparam venv' params' 
 					    val rtype = T.UNIT
-					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body, currLevel, breakLab)
+					    
+					    val {exp=bexp, ty=btype} = transExp(venv'', tenv, body, newLevel, breakLab)
 				    in
 				        if rtype = btype then
 				            ()
 			            else
 			                ErrorMsg.impossible "A procedure must return no value";
-		                Tr.procEntryExit(currLevel, bexp);
+		                Tr.procEntryExit(newLevel, bexp);
 				        {env={venv=venv', tenv=tenv}, expList=expList}
 			        end
 					

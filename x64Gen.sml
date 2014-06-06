@@ -33,6 +33,21 @@ struct
 			    munchStm a;
 			    munchStm b
 		    )
+		    | munchStm(T.EXP(T.CALL(e, args))) = 
+                emit(A.OPER{assem="call `s0\n",
+                            src=[munchExp(e)],
+                            dst=[],
+                            jump=NONE})
+            | munchStm(T.MOVE(T.TEMP t, T.CALL(e, args))) = 
+            (
+                
+                emit(A.OPER{assem="call `s0\n",
+                            src=[munchExp(e)],
+                            dst=[],
+                            jump=NONE});
+                print("THIRD! IS?UHOH!!!!!!!!!!\nyay!\n")
+            )
+		    
 		    | munchStm(T.EXP(e)) = 
 	        (
 		        munchExp(e);
@@ -53,24 +68,28 @@ struct
 		                    dst=[],
                             src=[munchExp e1],
                             jump=NONE})
-            | munchStm(T.MOVE(T.MEM(e1), e2)) = 
+            | munchStm(T.MOVE(T.MEM(e1), e2)) =
+            (
+                print("WHY!!!!!!!!!!\nyay!\n");
 		        emit(A.OPER{assem="mov [`s0], `s1\n",
 		                    dst=[],
                             src=[munchExp e1, munchExp e2],
                             jump=NONE})
-            (* not in the drawing *)
+            )
             | munchStm(T.MOVE(T.TEMP i, e1)) = 
+            (
+                print("SECONOND?UHOH!!!!!!!!!!\nyay!\n");
                 emit(A.OPER{assem="add `d0, `s0\n",
                             dst=[i],
                             src=[munchExp e1],
                             jump=NONE})
+            )
+            
             | munchStm(T.LABEL lab) =
                 emit(A.LABEL{assem= Symbol.name(lab) ^ ":\n", lab=lab})
-            (* (*Call may be very complicated, so I`m going to continue doing the easy stuff
-                and come back to it later.*)
-            | munchStm(T.EXP(T.CALL(e, args))) = 
-                emit(
-            *)
+
+            
+            
             | munchStm(T.JUMP(T.NAME n1, _)) =
                 emit(A.OPER{assem="jmp `j0\n",
                             dst=[],
@@ -100,10 +119,13 @@ struct
                                         src=[], 
                                         jump=NONE}))
             | munchExp(T.MEM(e1)) = 
+            (
+                print("REALLY?\n");
                 result(fn r => emit(A.OPER{assem="mov `d0, [`s0]\n",
                                         dst=[r],
                                         src=[munchExp e1], 
                                         jump=NONE}))
+            )
             | munchExp(T.BINOP(T.PLUS,e1,T.CONST i)) = 
                 result(fn r => emit(A.OPER{assem="mov `d0, `s0\nadd `d0," ^ Int.toString i ^ "\n",
                                         dst=[r],
@@ -140,6 +162,12 @@ struct
                                         src=[munchExp e1, munchExp e2], 
                                         jump=NONE}))
             | munchExp(T.TEMP t) = t
+            
+            | munchExp(T.NAME n) = 
+                result(fn r => emit (A.OPER {assem="lea `d0, " ^ (Symbol.name n)^"\n",
+                                   dst=[r], 
+                                   src=[], 
+                                   jump=NONE}))
             
             (* if you look closely you will see that we are missing many things *)
             

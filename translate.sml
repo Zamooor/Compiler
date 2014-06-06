@@ -109,7 +109,7 @@ datatype exp = Ex of Tree.exp
         ()
     )
     | procEntryExit(TOP, _) = 
-        ErrorMsg.impossible "NO! Can not Enter top level!"
+        ErrorMsg.impossible "NO! Can not enter top level!"
         
     fun getResult() = 
         !fragList
