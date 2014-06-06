@@ -1,1 +1,16 @@
-1 + 1
+let
+    var a := 1
+    var b := 2
+in
+    a := b;
+    a + 1;
+    b := a + 1;
+    a := b - 2;
+    b := 2 - b;
+    a := a -a;
+    a := a/b;
+    b := 1 * 2;
+    b := a + 2 + 3 - 4 * b;
+    a := 2 + 2;
+    if a < b then 1 + 1 else 2 + 2
+end

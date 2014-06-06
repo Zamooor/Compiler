@@ -509,7 +509,11 @@ struct
 			        if (length (expList) = 0) then
 				        {exp = Tr.seq([]), ty = T.UNIT}
 			        else
-			            List.last(map (fn x => transExp(venv, tenv, #1 x, currLevel, breakLab)) expList)
+			            let
+			                val treeList = map (fn x => transExp(venv, tenv, #1 x, currLevel, breakLab)) expList
+		                in
+			                {exp = Tr.expseq(map #exp treeList), ty = List.last((map #ty treeList))}
+		                end
 				
 		        )
 		        
