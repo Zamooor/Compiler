@@ -44,8 +44,8 @@ struct
                 emit(A.OPER{assem="call `s0\n",
                             src=[munchExp(e)],
                             dst=[],
-                            jump=NONE});
-                print("THIRD! IS?UHOH!!!!!!!!!!\nyay!\n")
+                            jump=NONE})
+                
             )
 		    
 		    | munchStm(T.EXP(e)) = 
@@ -70,7 +70,6 @@ struct
                             jump=NONE})
             | munchStm(T.MOVE(T.MEM(e1), e2)) =
             (
-                print("WHY!!!!!!!!!!\nyay!\n");
 		        emit(A.OPER{assem="mov [`s0], `s1\n",
 		                    dst=[],
                             src=[munchExp e1, munchExp e2],
@@ -78,7 +77,6 @@ struct
             )
             | munchStm(T.MOVE(T.TEMP i, e1)) = 
             (
-                print("SECONOND?UHOH!!!!!!!!!!\nyay!\n");
                 emit(A.OPER{assem="add `d0, `s0\n",
                             dst=[i],
                             src=[munchExp e1],
@@ -120,7 +118,6 @@ struct
                                         jump=NONE}))
             | munchExp(T.MEM(e1)) = 
             (
-                print("REALLY?\n");
                 result(fn r => emit(A.OPER{assem="mov `d0, [`s0]\n",
                                         dst=[r],
                                         src=[munchExp e1], 
