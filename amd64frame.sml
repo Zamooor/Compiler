@@ -54,8 +54,8 @@ It looked ugly and non-standard to me for the AMD registers so I used lower case
   val FP = Temp.newtemp()
   val wordSize = 8
  
-  val registers = [ "rsp","rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" ]
-  val registerTemps = [rsp, rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15]
+  val registers = ["fp","rsp","rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" ]
+  val registerTemps = [FP,rsp, rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15]
   (* Appel doesn't want any of the four sets to overlap so even though we think of the args registers as caller saves
      they are not listed that way here*)
 

@@ -17,10 +17,7 @@ structure Main = struct
 	    fun tempname t = 
 	        case (Temp.Table.look(F.tempMap, t)) of 
 	            SOME r => 
-	            (
-	                print("\n\nYAYAAYAYAYAYAYYAYAYAY\n");
 	                r
-                )
 	            | NONE => "t" ^ Int.toString t
         val format0 = Assem.format(tempname)
       in  

@@ -104,7 +104,7 @@ datatype exp = Ex of Tree.exp
     
     fun procEntryExit(Level {parent, name, frame, formals, unique}, body) =
     (
-        fragList := !fragList @ [F.PROC{body=unNx(body), frame=frame}];
+        fragList := !fragList @ [F.PROC{body=F.procEntryExit1(frame, Tr.SEQ(unNx(body), Tr.MOVE(Tr.TEMP(F.rax), unEx(body)))), frame=frame}];
         F.procEntryExit1(frame, Tr.SEQ(unNx(body), Tr.MOVE(Tr.TEMP(F.rax), unEx(body))));
         ()
     )
@@ -222,7 +222,7 @@ datatype exp = Ex of Tree.exp
     fun followstlink(deflevel, curlevel) = 
 	(
 	if(islvlequal(deflevel,curlevel))
-	then Tr.TEMP(F.FP)
+	    then Tr.TEMP(F.FP)
 	else
 		case 	curlevel
 		of 	Level {parent, name, formals, frame, unique} => followstlink(deflevel,parent)
