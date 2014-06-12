@@ -238,7 +238,7 @@ datatype exp = Ex of Tree.exp
 			of Top => Ex(Tr.CALL(Tr.NAME(funcLab), args))
 			  |Level {parent, name, formals, frame, unique} =>
 				let 
-					val args' = followstlink(curlevel,parent)::args
+					val args' = followstlink(parent,curlevel)::args
 				in
 					Ex(Tr.CALL(Tr.NAME(funcLab), args'))
 				end

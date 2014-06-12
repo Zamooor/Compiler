@@ -14,7 +14,15 @@ structure Main = struct
 (*         val _ = app (fn s => Printtree.printtree(TextIO.stdOut,s)) stms *)
         val stms' = Canon.traceSchedule(Canon.basicBlocks stms)
 	    val instrs =   List.concat(map (x64Gen.codegen frame) stms') 
-        val format0 = Assem.format(Temp.makestring)
+	    fun tempname t = 
+	        case (Temp.Table.look(F.tempMap, t)) of 
+	            SOME r => 
+	            (
+	                print("\n\nYAYAAYAYAYAYAYYAYAYAY\n");
+	                r
+                )
+	            | NONE => "t" ^ Int.toString t
+        val format0 = Assem.format(tempname)
       in  
         app (fn i => TextIO.output(TextIO.stdOut,format0 i)) instrs
 
