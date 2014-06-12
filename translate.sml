@@ -105,7 +105,6 @@ datatype exp = Ex of Tree.exp
     fun procEntryExit(Level {parent, name, frame, formals, unique}, body) =
     (
         fragList := !fragList @ [F.PROC{body=F.procEntryExit1(frame, Tr.SEQ(unNx(body), Tr.MOVE(Tr.TEMP(F.rax), unEx(body)))), frame=frame}];
-        F.procEntryExit1(frame, Tr.SEQ(unNx(body), Tr.MOVE(Tr.TEMP(F.rax), unEx(body))));
         ()
     )
     | procEntryExit(TOP, _) = 
@@ -222,7 +221,7 @@ datatype exp = Ex of Tree.exp
     fun followstlink(deflevel, curlevel) = 
 	(
 	if(islvlequal(deflevel,curlevel))
-	    then Tr.TEMP(F.FP)
+	    then Tr.TEMP(F.rbp)
 	else
 		case 	curlevel
 		of 	Level {parent, name, formals, frame, unique} => followstlink(deflevel,parent)
@@ -252,7 +251,7 @@ datatype exp = Ex of Tree.exp
 		Ex(Tr.MEM (Tr.BINOP(Tr.PLUS, 
 					 unEx(varExp), 
 					 Tr.BINOP(Tr.MUL,
-						  Tr.MEM(unEx(indexExp)),Tr.CONST(F.wordSize)
+						  Tr.MEM(unEx(indexExp)),Tr.CONST(F.wordsize)
 						 )
 				   )
 			 )
@@ -264,14 +263,14 @@ datatype exp = Ex of Tree.exp
 	Ex(Tr.MEM(Tr.BINOP(Tr.PLUS, 
 				Tr.MEM(unEx(varExp)), 
 				Tr.BINOP(Tr.MUL,
-					unEx(indexExp),Tree.CONST(F.wordSize)))))
+					unEx(indexExp),Tree.CONST(F.wordsize)))))
 
  (*  
      fun arrayConst(sizeExp,initExp) = 
 		let 
 			val arraytemp = Tr.TEMP(T.newtemp())
 		in
-			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE(arraytemp, F.externalCall("malloc", [Tr.BINOP(Tr.MUL, unEx(sizeExp), Tr.CONST(F.wordSize))])
+			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE(arraytemp, F.externalCall("malloc", [Tr.BINOP(Tr.MUL, unEx(sizeExp), Tr.CONST(F.wordsize))])
 						 ),
 					   Tr.EXP (F.externalCall("initArray", [unEx(sizeExp), unEx(initExp)])
 						  )
@@ -299,7 +298,7 @@ datatype exp = Ex of Tree.exp
 			val idx = 0
 
 		in
-			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE (recordtemp, F.externalCall("allocRecord", [Tr.CONST(count * F.wordSize)])
+			Ex(Tr.ESEQ(Tr.SEQ(Tr.MOVE (recordtemp, F.externalCall("allocRecord", [Tr.CONST(count * F.wordsize)])
 					         ),
 				 	  initField(fieldExps, 0)
 					 ),
