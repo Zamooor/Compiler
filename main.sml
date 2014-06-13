@@ -10,35 +10,37 @@ structure Main = struct
      let 
         val freeRegs = ref [F.rbx, F.r12, F.r13, F.r14, F.r15]
         val allocatedTemps = ref []
+        fun allocTemp(t) = 
+        (
+            let
+                val length = List.length(!freeRegs);
+            in
+                print("The length: "^Int.toString length^"\n");
+                if length = 0 then
+                    ErrorMsg.impossible "What? We ran out of registers!!"
+                else
+                    case (List.exists (fn x => t=x) F.registerTemps) of true => t
+                    | _ => 
+                    (
+                        print(Int.toString t ^ "\n");
+                        
+                        case  (List.find (fn ({tmp, reg}) => tmp = t) (!allocatedTemps)) of SOME {tmp, reg} => 
+                            reg
+                        | NONE =>
+                            let
+                                val reg = List.hd (!freeRegs)
+                            in
+                                freeRegs := List.tl (!freeRegs);
+                                print("Allocated one!\n");
+                                allocatedTemps := [{tmp=t, reg=reg}] @ (!allocatedTemps);
+                                reg
+                            end
+                    )
+            end
+        )
         fun allocReg (Assem.OPER{assem, dst, src, jump=SOME jump}) = 
             let
-                fun allocTemp(t) = 
-                (
-                    let
-                        val length = List.length(!freeRegs);
-                    in
-                        print("The length: "^Int.toString length^"\n");
-                        if length = 0 then
-                            ErrorMsg.impossible "What? We ran out of registers!!"
-                        else
-                            case (List.exists (fn x => t=x) F.registerTemps) of true => t
-                            | _ => 
-                            (
-                                print(Int.toString t ^ "\n");
-                                case  (List.find (fn ({tmp, reg}) => tmp = t) !allocatedTemps) of SOME {tmp, reg} => 
-                                    reg
-                                | NONE =>
-                                    let
-                                        val reg = List.hd (!freeRegs)
-                                    in
-                                        freeRegs := List.tl (!freeRegs);
-                                        print("Allocated one!\n");
-                                        allocatedTemps := {tmp=t, reg=reg} @ !allocatedTemps
-                                        reg
-                                    end
-                            )
-                    end
-                )
+               
                 val dst' = map allocTemp dst
                 val src' = map allocTemp src
             in
@@ -46,33 +48,6 @@ structure Main = struct
             end
         | allocReg (Assem.OPER{assem, dst, src, jump=NONE}) = 
             let
-                fun allocTemp(t) = 
-                (
-                    let
-                        val length = List.length(!freeRegs);
-                    in
-                        print("The length: "^Int.toString length^"\n");
-                        if length = 0 then
-                            ErrorMsg.impossible "What? We ran out of registers!!"
-                        else
-                            case (List.exists (fn x => t=x) F.registerTemps) of true => t
-                            | _ => 
-                            (
-                                print(Int.toString t ^ "\n");
-                                case  (List.find (fn ({tmp, reg}) => tmp = t) !allocatedTemps) of SOME {tmp, reg} => 
-                                    reg
-                                | NONE =>
-                                    let
-                                        val reg = List.hd (!freeRegs)
-                                    in
-                                        freeRegs := List.tl (!freeRegs);
-                                        print("Allocated one!\n");
-                                        allocatedTemps := {tmp=t, reg=reg} @ !allocatedTemps
-                                        reg
-                                    end
-                            )
-                    end
-                )
                 val dst' = map allocTemp dst
                 val src' = map allocTemp src
             in
