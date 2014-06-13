@@ -1,0 +1,4 @@
+nasm -felf64 filename.tig.s
+ld filename.tig.o
+./a.out
+echo $?
