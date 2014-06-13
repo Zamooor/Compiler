@@ -15,14 +15,12 @@ structure Main = struct
             let
                 val length = List.length(!freeRegs);
             in
-                print("The length: "^Int.toString length^"\n");
                 if length = 0 then
-                    ErrorMsg.impossible "What? We ran out of registers!!"
+                    t
                 else
                     case (List.exists (fn x => t=x) F.registerTemps) of true => t
                     | _ => 
                     (
-                        print(Int.toString t ^ "\n");
                         
                         case  (List.find (fn ({tmp, reg}) => tmp = t) (!allocatedTemps)) of SOME {tmp, reg} => 
                             reg
@@ -31,7 +29,6 @@ structure Main = struct
                                 val reg = List.hd (!freeRegs)
                             in
                                 freeRegs := List.tl (!freeRegs);
-                                print("Allocated one!\n");
                                 allocatedTemps := [{tmp=t, reg=reg}] @ (!allocatedTemps);
                                 reg
                             end
@@ -68,8 +65,15 @@ structure Main = struct
 	                r
 	            | NONE => "t" ^ Int.toString t
         val format0 = Assem.format(tempname)
-      in  
-        app (fn i => TextIO.output(TextIO.stdOut,format0 i)) instrs'
+      in
+      ( 
+        TextIO.output(out, "global L3\n");
+        app (fn i => TextIO.output(out,format0 i)) instrs';  
+        TextIO.output(out, "mov rdi, rax  \nmov eax, 60  \nsyscall  \n");      
+        TextIO.output(TextIO.stdOut, "global L3\n");
+        app (fn i => TextIO.output(TextIO.stdOut,format0 i)) instrs';
+        TextIO.output(TextIO.stdOut, "mov rdi, rax  \nmov eax, 60  \nsyscall  \n")
+      )
 
       end
     | emitproc out (F.STRING(lab,s)) = TextIO.output(out,F.string(lab,s))
@@ -99,6 +103,7 @@ structure Main = struct
             	end
 		    )
         in 
+            
             app printProc frags;
             TextIO.output(TextIO.stdOut, "/*********************************/\n\tCanonized tree\n/*********************************/\n");
 		    app canonProc frags;

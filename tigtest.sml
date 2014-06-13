@@ -1,5 +1,5 @@
 CM.make "sources.cm";
 
-Main.compile "testfiles/validTests/test.tig";
+Main.compile "testfiles/validTests/killer.tig";
 
 OS.Process.exit(OS.Process.success);
