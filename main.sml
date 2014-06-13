@@ -69,7 +69,7 @@ structure Main = struct
 	            | NONE => "t" ^ Int.toString t
         val format0 = Assem.format(tempname)
       in  
-        app (fn i => TextIO.output(TextIO.stdOut,format0 i)) instrs
+        app (fn i => TextIO.output(TextIO.stdOut,format0 i)) instrs'
 
       end
     | emitproc out (F.STRING(lab,s)) = TextIO.output(out,F.string(lab,s))
