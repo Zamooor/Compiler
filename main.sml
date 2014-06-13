@@ -8,12 +8,85 @@ structure Main = struct
 
    fun emitproc out (F.PROC{body,frame}) =
      let 
+        val freeRegs = ref [F.rbx, F.r12, F.r13, F.r14, F.r15]
+        val allocatedTemps = ref []
+        fun allocReg (Assem.OPER{assem, dst, src, jump=SOME jump}) = 
+            let
+                fun allocTemp(t) = 
+                (
+                    let
+                        val length = List.length(!freeRegs);
+                    in
+                        print("The length: "^Int.toString length^"\n");
+                        if length = 0 then
+                            ErrorMsg.impossible "What? We ran out of registers!!"
+                        else
+                            case (List.exists (fn x => t=x) F.registerTemps) of true => t
+                            | _ => 
+                            (
+                                print(Int.toString t ^ "\n");
+                                case  (List.find (fn ({tmp, reg}) => tmp = t) !allocatedTemps) of SOME {tmp, reg} => 
+                                    reg
+                                | NONE =>
+                                    let
+                                        val reg = List.hd (!freeRegs)
+                                    in
+                                        freeRegs := List.tl (!freeRegs);
+                                        print("Allocated one!\n");
+                                        allocatedTemps := {tmp=t, reg=reg} @ !allocatedTemps
+                                        reg
+                                    end
+                            )
+                    end
+                )
+                val dst' = map allocTemp dst
+                val src' = map allocTemp src
+            in
+                Assem.OPER{assem=assem, dst=dst', src=src', jump=SOME jump}
+            end
+        | allocReg (Assem.OPER{assem, dst, src, jump=NONE}) = 
+            let
+                fun allocTemp(t) = 
+                (
+                    let
+                        val length = List.length(!freeRegs);
+                    in
+                        print("The length: "^Int.toString length^"\n");
+                        if length = 0 then
+                            ErrorMsg.impossible "What? We ran out of registers!!"
+                        else
+                            case (List.exists (fn x => t=x) F.registerTemps) of true => t
+                            | _ => 
+                            (
+                                print(Int.toString t ^ "\n");
+                                case  (List.find (fn ({tmp, reg}) => tmp = t) !allocatedTemps) of SOME {tmp, reg} => 
+                                    reg
+                                | NONE =>
+                                    let
+                                        val reg = List.hd (!freeRegs)
+                                    in
+                                        freeRegs := List.tl (!freeRegs);
+                                        print("Allocated one!\n");
+                                        allocatedTemps := {tmp=t, reg=reg} @ !allocatedTemps
+                                        reg
+                                    end
+                            )
+                    end
+                )
+                val dst' = map allocTemp dst
+                val src' = map allocTemp src
+            in
+                Assem.OPER{assem=assem, dst=dst', src=src', jump=NONE}
+            end
+        | allocReg (label) = 
+            label
         val _ = print ("emit " ^ Symbol.name(F.name frame) ^ "\n")
 (*         val _ = Printtree.printtree(TextIO.stdOut,body) *)
 	    val stms = Canon.linearize body
 (*         val _ = app (fn s => Printtree.printtree(TextIO.stdOut,s)) stms *)
         val stms' = Canon.traceSchedule(Canon.basicBlocks stms)
 	    val instrs =   List.concat(map (x64Gen.codegen frame) stms') 
+	    val instrs' = map allocReg instrs
 	    fun tempname t = 
 	        case (Temp.Table.look(F.tempMap, t)) of 
 	            SOME r => 

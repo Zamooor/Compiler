@@ -16,7 +16,11 @@ sig
 	val rdx : Temp.temp
 	val rcx : Temp.temp
 	val r8  : Temp.temp
-	val r9  : Temp.temp
+	val r12  : Temp.temp
+	val r13  : Temp.temp
+	val r14  : Temp.temp
+	val r15  : Temp.temp
+	val rbx  : Temp.temp
 
 	val argregs : Temp.temp list
 	val calleesaves : Temp.temp list
@@ -25,6 +29,7 @@ sig
 	val colorable : Temp.temp list
 	val tempMap : register Temp.Table.table
 	val registers : register list
+	val registerTemps : Temp.temp list
 
 	val newFrame : {name: Temp.label, formals: bool list} -> frame
 	val name : frame -> Temp.label
